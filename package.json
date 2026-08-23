@@ -1,0 +1,22 @@
+{
+  "name": "rnet",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.10",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "codegen": "bun run packages/types/codegen/generate.ts",
+    "codegen:check": "bun run packages/types/codegen/generate.ts --check",
+    "conformance": "bun run packages/conformance/src/cli.ts fixtures",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "check": "bun run codegen:check && bun run typecheck && bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.0",
+    "@types/node": "26.2.0",
+    "typescript": "6.0.3"
+  }
+}

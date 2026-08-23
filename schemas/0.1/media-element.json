@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rnet.network/schemas/0.1/media-element.json",
+  "title": "MediaElement",
+  "description": "An immutable, UUIDv7-identified atomic content record: an owner, a content-addressed payload, and contextual metadata. Five kinds, closed set: an element kind exists iff a human consumes that thing directly. Every live element resolves — bytes is required; platform-locked content is referenced via the owning object's keys, never modelled as an element with a missing payload.",
+  "type": "object",
+  "required": [
+    "rnet_schema",
+    "kind",
+    "uri",
+    "owner",
+    "content_hash",
+    "mime",
+    "bytes"
+  ],
+  "properties": {
+    "rnet_schema": {
+      "const": "0.1",
+      "description": "Protocol version this element record was written under."
+    },
+    "kind": {
+      "description": "Consumption strategy. Closed set — new kinds only by protocol revision.",
+      "enum": [
+        "text",
+        "image",
+        "audio",
+        "video",
+        "document"
+      ]
+    },
+    "uri": {
+      "type": "string",
+      "description": "Immutable UUIDv7 record identity, independent of payload identity.",
+      "pattern": "^rnet://element/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "owner": {
+      "type": "string",
+      "description": "Immutable owner identity assigned by the store at creation.",
+      "pattern": "^rnet://id/[A-Za-z0-9._~-]+$"
+    },
+    "content_hash": {
+      "type": "string",
+      "description": "SHA-256 identity of the payload bytes; not record identity or authority.",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "mime": {
+      "type": "string",
+      "description": "IANA media type. mime is truth; kind is the consumption hint.",
+      "pattern": "^[a-z]+/[a-zA-Z0-9][a-zA-Z0-9!#$&^_.+-]*$"
+    },
+    "bytes": {
+      "type": "string",
+      "description": "Retrievable payload location. Returned bytes must hash to content_hash.",
+      "format": "uri"
+    },
+    "byte_size": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "patternProperties": {
+    "^x-[a-z0-9-]+$": {
+      "description": "Namespaced extensions. Consumers MUST ignore namespaces they don't understand."
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rnet.network/schemas/0.1/grant.json",
+  "title": "Grant",
+  "description": "The read-edge conformance unit: {subject, scope[]} attached to a Vibe. Scope semantics are store-enforced, always — never client-honor-system. Grants are owner-set; delegation is not specified. Stores MUST deny grants whose subject namespace they do not understand.",
+  "type": "object",
+  "required": [
+    "subject",
+    "scope"
+  ],
+  "properties": {
+    "subject": {
+      "type": "string",
+      "description": "Opaque string with a namespace prefix: id:{rnet-id} (a user), client:{name} (a registered application), public (anyone), or {x-namespace}:{...} (extension subject types).",
+      "pattern": "^(id:rnet://id/[A-Za-z0-9._~-]+|client:[a-z0-9][a-z0-9._-]*|public|x-[a-z0-9-]+:.+)$"
+    },
+    "scope": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "read",
+          "write:user",
+          "write:objects",
+          "write:inferred",
+          "push",
+          "pull"
+        ]
+      },
+      "description": "read: fetch Vibe/objects/elements — never origins, which are owner-only. write:user: mutate user blocks only. write:objects: create authored objects. write:inferred: write inferred entries directly, under a subject-namespaced task key. push: invoke push. pull: invoke a pull on already-configured sources. Grants are set by the owner alone — no scope delegates the ability to grant."
+    }
+  },
+  "additionalProperties": false
+}

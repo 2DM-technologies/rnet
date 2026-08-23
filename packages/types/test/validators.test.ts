@@ -1,0 +1,53 @@
+import { describe, expect, test } from "bun:test";
+
+import { validateMediaObject, validateSchema } from "../src/index.ts";
+
+const uuid = "018f1f4e-7b3a-7cc1-8b7a-123456789abc";
+const originUuid = "018f1f4e-7b3a-7cc1-8b7a-123456789abd";
+const hash = `sha256:${"a".repeat(64)}`;
+const owner = "rnet://id/user-1";
+
+describe("canonical schema behavior", () => {
+  test("enforces generated parser provenance", () => {
+    expect(validateSchema("ingest-record", { method: "generated_parser", reproducible: true }).ok).toBe(false);
+    expect(validateSchema("ingest-record", { method: "generated_parser", reproducible: true, parser_hash: hash }).ok).toBe(true);
+  });
+
+  test("enforces agent reproducibility", () => {
+    expect(validateSchema("ingest-record", { method: "agent", reproducible: true }).ok).toBe(false);
+    expect(validateSchema("ingest-record", { method: "agent", reproducible: false }).ok).toBe(true);
+  });
+
+  test("enforces registered object vocabularies", () => {
+    const object = {
+      rnet_schema: "0.1",
+      uri: `rnet://object/${uuid}`,
+      owner,
+      type: "transaction",
+      elements: [],
+      source: {
+        ingest: { method: "parser", reproducible: true },
+        origins: [`rnet://origin/${originUuid}`],
+        properties: { amount: -4.5 },
+      },
+    };
+
+    expect(validateSchema("media-object", object).ok).toBe(true);
+    expect(validateMediaObject(object).ok).toBe(false);
+  });
+
+  test("separates UUID record identity from payload identity", () => {
+    const element = {
+      rnet_schema: "0.1",
+      uri: `rnet://element/${uuid}`,
+      owner,
+      content_hash: hash,
+      kind: "text",
+      mime: "text/plain",
+      bytes: "https://blob.example/element",
+    };
+    expect(validateSchema("media-element", element).ok).toBe(true);
+    expect(validateSchema("media-element", { ...element, uri: `rnet://element/${hash}` }).ok).toBe(false);
+    expect(validateSchema("media-element", { ...element, owner: undefined }).ok).toBe(false);
+  });
+});
