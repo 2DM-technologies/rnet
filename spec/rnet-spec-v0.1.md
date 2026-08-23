@@ -345,7 +345,7 @@ Base URL: `https://{host}/rnet/v0`. Auth: bearer credential bound to an `id:` or
 
 | Method | Path | Scope | Description |
 |---|---|---|---|
-| `POST` | `/objects` | (owner) or `write:objects` | Create MediaObject(s). Batch-first. The store assigns immutable `owner`; it MUST ignore or reject a conflicting client-supplied value. A subject holding `write:objects` must name the authorizing Vibe and may create only `authored` objects owned by that Vibe's owner, grounded in its own `rnet://client/` origin. Ingested objects come from the pull pipeline. Rejected unless the `source` block conforms (§2.3). |
+| `POST` | `/objects` | (owner) or `write:objects` | Create MediaObject(s). Batch-first. Returns `{mediaObjects: MediaObject[]}`. The store assigns immutable `owner`; it MUST ignore or reject a conflicting client-supplied value. A subject holding `write:objects` must name the authorizing Vibe and may create only `authored` objects owned by that Vibe's owner, grounded in its own `rnet://client/` origin. Ingested objects come from the pull pipeline. Rejected unless the `source` block conforms (§2.3). |
 | `GET` | `/objects/{id}` | `read` | Fetch object |
 | `PATCH` | `/objects/{id}/user` | `write:user` | Mutate `user` block only. `source` is never PATCHable. |
 | `PUT` | `/objects/{id}/inferred` | `push` or `write:inferred` | Write an `inferred` entry. The two scopes differ in *whose* namespace may be written: `push` lands results under the store's writer prefix; `write:inferred` lets a subject write under its own registered name and nothing else. |

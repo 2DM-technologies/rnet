@@ -105,7 +105,8 @@ export async function runStoreConformance(options: StoreConformanceOptions): Pro
     });
     check("owner can create and attach a grounded object", objectResponse.status === 201, `status ${objectResponse.status}`);
     if (!objectResponse.ok) return summarize(checks);
-    const createdObject = ((await objectResponse.json()) as { items: MediaObject[] }).items[0];
+    const createdObject = ((await objectResponse.json()) as { mediaObjects: MediaObject[] })
+      .mediaObjects[0];
     const objectValidation = validateMediaObject(createdObject);
     check("created object and registered vocabulary conform", objectValidation.ok, validationDetail(objectValidation));
 
