@@ -308,7 +308,7 @@ A grant is `{subject, scope[]}` attached to a Vibe. Subjects are opaque strings 
 |---|---|---|
 | `read` | Fetch the Vibe, its objects, their elements | **Never includes origin artifacts.** Origins are owner-only and not delegable by any scope — a raw export is strictly more revealing than the objects parsed from it. |
 | `write:user` | Mutate `user` blocks of objects in the Vibe | MUST NOT touch `source`, `inferred`, `keys`, `type`, or `elements`. Revision-protected (§6.2). |
-| `write:objects` | Create objects and elements for the Vibe | Created records inherit the Vibe's owner. Created objects carry `source.ingest.method: "authored"` and an origin naming the creating client (`rnet://client/{uuid}`). `source` is immutable once written, as always. The scope does not authorize attaching a pre-existing object from another Vibe, even when both Vibes share an owner. |
+| `write:objects` | Atomically create objects and their new elements for the Vibe | Created records inherit the Vibe's owner. Created objects carry `source.ingest.method: "authored"` and an origin naming the creating client (`rnet://client/{uuid}`). `source` is immutable once written, as always. New element uploads MUST be committed with the object that first references them; the scope does not authorize detached element creation or attaching a pre-existing object. |
 | `write:inferred` | Write `inferred` entries directly, without a server-mediated push | The writer half of the key MUST be the subject's own registered name, store-enforced — no subject can write under another's namespace or the store's. |
 | `push` | Invoke push operations (§4.3) on the Vibe | Writes land only in `inferred` blocks (object- and Vibe-level). |
 | `pull` | Invoke a pull on the Vibe's already-configured sources | Cannot modify pull configuration and cannot read origins — both are owner-only, exercised through the store's own surfaces. This is the refresh button, nothing more. |
@@ -327,7 +327,7 @@ The Vibe owner holds all scopes implicitly, can revoke any grant at any time, an
 
 ## 4. Store API
 
-Base URL: `https://{host}/rnet/v0`. Auth: bearer credential bound to an `id:` or `client:` subject; issuance is implementation-defined. All bodies `application/json`.
+Base URL: `https://{host}/rnet/v0`. Auth: bearer credential bound to an `id:` or `client:` subject; issuance is implementation-defined. Structured bodies are `application/json` except the multipart atomic creation endpoint described below; payload-upload endpoints accept their declared media type.
 
 ### 4.1 Vibes
 
@@ -338,21 +338,46 @@ Base URL: `https://{host}/rnet/v0`. Auth: bearer credential bound to an `id:` or
 | `GET` | `/vibes/{id}/objects?expand=full` | `read` | Fetch with objects expanded as `{mediaObjects: MediaObject[]}`, preserving stored order |
 | `PATCH` | `/vibes/{id}` | (owner) | Title, pull config, grants |
 | `DELETE` | `/vibes/{id}` | (owner) | Delete Vibe (objects survive if referenced elsewhere; orphans GC'd) |
-| `POST` | `/vibes/{id}/objects` | (owner) or `write:objects` | Add object refs, appending in request order. Every added object MUST have the same `owner` as the Vibe. A `write:objects` subject may attach only an object it created for this Vibe; reusing an existing same-owner object is owner-only. |
+| `POST` | `/vibes/{id}/objects` | (owner) | Add existing object refs, appending in request order. Every added object MUST have the same `owner` as the Vibe. |
 | `DELETE` | `/vibes/{id}/objects` | (owner) | Remove refs (never deletes underlying objects) |
 
 ### 4.2 Objects, Elements & Origins
 
 | Method | Path | Scope | Description |
 |---|---|---|---|
-| `POST` | `/objects` | (owner) or `write:objects` | Create MediaObject(s). Batch-first. Returns `{mediaObjects: MediaObject[]}`. The store assigns immutable `owner`; it MUST ignore or reject a conflicting client-supplied value. A subject holding `write:objects` must name the authorizing Vibe and may create only `authored` objects owned by that Vibe's owner, grounded in its own `rnet://client/` origin. Ingested objects come from the pull pipeline. Rejected unless the `source` block conforms (§2.3). |
+| `POST` | `/objects` | (owner) or `write:objects` | Atomically create MediaObject(s), any newly uploaded MediaElements they reference, and optional Vibe membership. Multipart format below. Returns `{mediaObjects: MediaObject[]}`. The store assigns immutable `owner`; it MUST ignore or reject a conflicting client-supplied value. A subject holding `write:objects` must name the authorizing Vibe and may create only `authored` objects owned by that Vibe's owner, grounded in its own `rnet://client/` origin. Ingested objects come from the pull pipeline. Rejected unless the `source` block conforms (§2.3). |
 | `GET` | `/objects/{id}` | `read` | Fetch object |
 | `PATCH` | `/objects/{id}/user` | `write:user` | Mutate `user` block only. `source` is never PATCHable. |
 | `PUT` | `/objects/{id}/inferred` | `push` or `write:inferred` | Write an `inferred` entry. The two scopes differ in *whose* namespace may be written: `push` lands results under the store's writer prefix; `write:inferred` lets a subject write under its own registered name and nothing else. |
-| `POST` | `/elements` | (owner) or `write:objects` | Create an immutable element record and upload its payload. The store assigns immutable `owner` and returns it with a UUID URI plus `content_hash`. A non-owner upload MUST name the Vibe whose `write:objects` grant authorizes it; the element inherits that Vibe's owner and the subject may attach it only in that Vibe. |
+| `POST` | `/elements` | (owner) | Create a detached immutable element record and upload its payload. Delegated clients must upload new elements atomically through `POST /objects`. |
 | `GET` | `/elements/{id}` | `read` | Fetch element metadata and a retrievable payload URL. The element must be reachable through a Vibe the caller can read; knowing its UUID or `content_hash` grants nothing. |
 | `POST` | `/origins` | (owner) | Create an immutable origin record and upload its raw source payload. The record owner is the authenticated user. Returns `owner`, a UUID URI, and `content_hash`. |
 | `GET` | `/origins/{id}` | (owner) | Fetch origin artifact metadata and a retrievable payload URL. |
+
+**Atomic object and element creation.** `POST /objects` uses `multipart/form-data`. The required
+`metadata` text part is JSON with the normal `{vibe?, objects}` envelope. An ordered `elements`
+entry may be an existing element URI or an upload descriptor:
+
+```json
+{
+  "vibe": "rnet://vibe/018f1f4e-7b3a-7cc1-8b7a-123456789abc",
+  "objects": [
+    {
+      "type": "note",
+      "elements": [{ "upload": "body", "kind": "text", "mime": "text/plain" }],
+      "properties": { "title": "Example" }
+    }
+  ]
+}
+```
+
+Each descriptor's `upload` names one binary form part and `mime` declares its media type. If the
+multipart parser exposes a media type for the binary part, it MUST agree with the descriptor.
+Every binary part MUST be referenced, every descriptor MUST resolve, and conflicting `kind` values
+or `mime` values for a shared upload name MUST be rejected. The store may stage content-addressed bytes before its
+database transaction, but the element records, objects, ordered references, provenance, revisions,
+and Vibe memberships MUST commit together. Failed transactions leave no reachable element record;
+unreferenced staged bytes are garbage-collected.
 
 ### 4.3 Push & Pull
 

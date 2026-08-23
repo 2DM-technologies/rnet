@@ -54,7 +54,7 @@ export async function runStoreConformance(options: StoreConformanceOptions): Pro
         grants: [
           {
             subject: "client:rbudget",
-            scope: ["read", "write:user", "write:inferred"],
+            scope: ["read", "write:user", "write:objects", "write:inferred"],
           },
         ],
       }),
@@ -99,10 +99,12 @@ export async function runStoreConformance(options: StoreConformanceOptions): Pro
       },
       "x-rnet-conformance": { synthetic: true },
     };
-    const objectResponse = await json("/objects", {
+    const objectForm = new FormData();
+    objectForm.set("metadata", JSON.stringify({ vibe: vibe.uri, objects: [object] }));
+    const objectResponse = await fetcher(`${base}/objects`, {
       method: "POST",
       headers: ownerHeaders,
-      body: JSON.stringify({ vibe: vibe.uri, objects: [object] }),
+      body: objectForm,
     });
     check("owner can create and attach a grounded object", objectResponse.status === 201, `status ${objectResponse.status}`);
     if (!objectResponse.ok) return summarize(checks);
@@ -110,6 +112,91 @@ export async function runStoreConformance(options: StoreConformanceOptions): Pro
       .mediaObjects[0];
     const objectValidation = validateMediaObject(createdObject);
     check("created object and registered vocabulary conform", objectValidation.ok, validationDetail(objectValidation));
+
+    const detachedElement = await fetcher(`${base}/elements`, {
+      method: "POST",
+      headers: {
+        ...clientHeaders,
+        "Content-Type": "text/plain",
+        "X-Rnet-Kind": "text",
+      },
+      body: "detached client payload",
+    });
+    check(
+      "write:objects cannot create a detached element",
+      detachedElement.status === 403,
+      `status ${detachedElement.status}`,
+    );
+
+    const missingUploadForm = new FormData();
+    missingUploadForm.set(
+      "metadata",
+      JSON.stringify({
+        vibe: vibe.uri,
+        objects: [
+          {
+            type: "note",
+            elements: [{ upload: "missing", kind: "text", mime: "text/plain" }],
+            properties: { title: "Missing upload" },
+          },
+        ],
+      }),
+    );
+    const missingUpload = await fetcher(`${base}/objects`, {
+      method: "POST",
+      headers: clientHeaders,
+      body: missingUploadForm,
+    });
+    check(
+      "atomic creation rejects an unresolved upload descriptor",
+      missingUpload.status === 422,
+      `status ${missingUpload.status}`,
+    );
+
+    const authoredForm = new FormData();
+    authoredForm.set(
+      "metadata",
+      JSON.stringify({
+        vibe: vibe.uri,
+        objects: [
+          {
+            type: "note",
+            elements: [{ upload: "body", kind: "text", mime: "text/plain" }],
+            properties: { title: "Atomic conformance note" },
+          },
+        ],
+      }),
+    );
+    authoredForm.set("body", new Blob(["atomic client payload"], { type: "text/plain" }), "body");
+    const authoredResponse = await fetcher(`${base}/objects`, {
+      method: "POST",
+      headers: clientHeaders,
+      body: authoredForm,
+    });
+    check(
+      "write:objects atomically creates an object and its element",
+      authoredResponse.status === 201,
+      `status ${authoredResponse.status}`,
+    );
+    if (authoredResponse.ok) {
+      const authoredObject = ((await authoredResponse.json()) as { mediaObjects: MediaObject[] })
+        .mediaObjects[0];
+      const authoredValidation = validateMediaObject(authoredObject);
+      check(
+        "atomically created object conforms to its schema",
+        authoredValidation.ok,
+        validationDetail(authoredValidation),
+      );
+      const elementId = authoredObject?.elements[0]?.split("/").at(-1);
+      const elementResponse = elementId
+        ? await json(`/elements/${elementId}`, { headers: clientHeaders })
+        : undefined;
+      check(
+        "atomically created element is readable through its Vibe",
+        elementResponse?.status === 200,
+        elementResponse ? `status ${elementResponse.status}` : "object returned no element",
+      );
+    }
 
     const clientObject = await json(`/objects/${vibeId}`, { headers: clientHeaders });
     check("read grant reaches objects through Vibe membership", clientObject.status === 200, `status ${clientObject.status}`);
