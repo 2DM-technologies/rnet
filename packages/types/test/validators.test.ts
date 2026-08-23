@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { validateMediaObject, validateSchema } from "../src/index.ts";
+import { RNET_SCHEMA_VERSION, validateMediaObject, validateSchema } from "../src/index.ts";
 
 const uuid = "018f1f4e-7b3a-7cc1-8b7a-123456789abc";
 const originUuid = "018f1f4e-7b3a-7cc1-8b7a-123456789abd";
@@ -20,7 +20,7 @@ describe("canonical schema behavior", () => {
 
   test("enforces registered object vocabularies", () => {
     const object = {
-      rnet_schema: "0.1",
+      rnet_schema: RNET_SCHEMA_VERSION,
       uri: `rnet://object/${uuid}`,
       owner,
       type: "transaction",
@@ -38,7 +38,7 @@ describe("canonical schema behavior", () => {
 
   test("separates UUID record identity from payload identity", () => {
     const element = {
-      rnet_schema: "0.1",
+      rnet_schema: RNET_SCHEMA_VERSION,
       uri: `rnet://element/${uuid}`,
       owner,
       content_hash: hash,

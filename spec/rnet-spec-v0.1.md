@@ -335,7 +335,7 @@ Base URL: `https://{host}/rnet/v0`. Auth: bearer credential bound to an `id:` or
 |---|---|---|---|
 | `POST` | `/vibes` | (owner) | Create a Vibe. Body: `{title, pull?, grants?}` |
 | `GET` | `/vibes/{id}` | `read` | Fetch Vibe (metadata + object URIs, paginated in stored order) |
-| `GET` | `/vibes/{id}/objects?expand=full` | `read` | Fetch with objects expanded, preserving stored order |
+| `GET` | `/vibes/{id}/objects?expand=full` | `read` | Fetch with objects expanded as `{mediaObjects: MediaObject[]}`, preserving stored order |
 | `PATCH` | `/vibes/{id}` | (owner) | Title, pull config, grants |
 | `DELETE` | `/vibes/{id}` | (owner) | Delete Vibe (objects survive if referenced elsewhere; orphans GC'd) |
 | `POST` | `/vibes/{id}/objects` | (owner) or `write:objects` | Add object refs, appending in request order. Every added object MUST have the same `owner` as the Vibe. A `write:objects` subject may attach only an object it created for this Vibe; reusing an existing same-owner object is owner-only. |

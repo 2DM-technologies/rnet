@@ -1,6 +1,8 @@
 import { mkdir, readdir } from "node:fs/promises";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 
+import { RNET_SCHEMA_VERSION } from "../src/version.ts";
+
 interface SchemaDescriptor {
   constName: string;
   typeName: string;
@@ -9,7 +11,7 @@ interface SchemaDescriptor {
 
 const packageRoot = resolve(import.meta.dir, "..");
 const repoRoot = resolve(packageRoot, "../..");
-const schemaRoot = join(repoRoot, "schemas", "0.1");
+const schemaRoot = join(repoRoot, "schemas", RNET_SCHEMA_VERSION);
 const generatedRoot = join(packageRoot, "src", "generated");
 
 const publicNames: Record<string, Pick<SchemaDescriptor, "constName" | "typeName">> = {

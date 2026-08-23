@@ -1,4 +1,5 @@
 import {
+  RNET_SCHEMA_VERSION,
   validateMediaObject,
   validateSchema,
   type MediaObject,
@@ -86,7 +87,7 @@ export async function runStoreConformance(options: StoreConformanceOptions): Pro
     check("origin metadata conforms to its schema", originValidation.ok, validationDetail(originValidation));
 
     const object: MediaObject = {
-      rnet_schema: "0.1",
+      rnet_schema: RNET_SCHEMA_VERSION,
       uri: `rnet://object/${vibeId}`,
       owner: vibe.owner,
       type: "transaction",
