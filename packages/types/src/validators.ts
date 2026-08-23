@@ -91,7 +91,7 @@ export const validators = {
   vibe: compiled<Vibe>(vibeSchema.$id),
 } satisfies { [Name in SchemaName]: ValidateFunction<SchemaTypes[Name]> };
 
-const registeredObjectTypes: Record<string, ValidateFunction> = {
+const OBJECT_TYPES_REGISTRY: Record<string, ValidateFunction> = {
   track: validators.track,
   transaction: validators.transaction,
 };
@@ -107,7 +107,7 @@ export function validateMediaObject(value: unknown): ValidationResult<MediaObjec
   const core = result(validators["media-object"], value);
   if (!core.ok) return core;
 
-  const vocabulary = registeredObjectTypes[core.value.type];
+  const vocabulary = OBJECT_TYPES_REGISTRY[core.value.type];
   if (!vocabulary) return core;
 
   const properties = core.value.source.properties;
