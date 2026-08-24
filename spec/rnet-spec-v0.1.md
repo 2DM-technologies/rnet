@@ -20,7 +20,7 @@ Everything else is product, not protocol:
 | Store semantics — identity, creation, access, push, pull | **Protocol** (§4) |
 | How ingestion is implemented (skills, agents, parsers) | Implementation (reference: Rhizome ingestion runtime) |
 | How machines (client applications) are built, registered, sandboxed, metered, billed | Implementation (reference: Rhizome dMachine SDK) |
-| Identity issuance and authentication | Implementation (URI shapes are DID-compatible; see §8) |
+| Identity issuance and authentication | Implementation (identity URIs are opaque; see §8) |
 
 **The test for protocol membership:** would two independent store implementations that disagreed produce documents or behaviours with incompatible meaning? Machine manifests fail that test — a client built against one store's SDK simply doesn't run on another, which is a product gap, not a protocol breach. Copying a Vibe fails it too: it is Vibe creation plus adding object references, so no store needs to agree on a "fork" operation. Scope semantics pass it — a store that let a `write:user` grant touch `source` blocks would corrupt every client's trust model.
 
@@ -278,12 +278,12 @@ A dynamic, owned collection of MediaObjects, plus the state that makes it living
 |---|---|
 | `rnet_schema` | Protocol version this document conforms to. Required. |
 | `owner` | An `rnet://id/` URI. Identity issuance is out of protocol (§8); the URI shape is stable. |
-| `objects` | Ordered list of MediaObject URIs. A URI appears at most once in a Vibe. Stores MUST preserve this order, including across paginated reads. |
+| `objects` | Ordered list of MediaObject URIs. A URI MAY appear more than once; each occurrence is a distinct placement. Stores MUST preserve this order, including repeated references, across paginated reads. |
 | `inferred` | The Vibe-level inferred block — same task-keyed shape and rules as an object's (§2.3). Vibes carry no `source` block: they are authored, not ingested. The store's `summarize` task conventionally writes `summary` (the compact context pushed to models instead of the full object list) and `tags`. Derived indexes — embeddings, search structures — are built *from* Vibes by the store, never carried *in* them. |
 | `pull` | How the Vibe acquires new objects: which sources feed it, on what policy (`append_new`, `replace`, `suggest_only`). |
 | `grants` | The access-control list (§3). |
 
-**Vibes contain object references, not copies.** Two Vibes referencing the same object see the same `source` and `user` blocks. Copying a Vibe is ordinary client work — create a Vibe, add the same object references — and needs no protocol operation.
+**Vibes contain object references, not copies.** Multiple placements of the same object, whether within one Vibe or across Vibes, see the same `source` and `user` blocks. Copying a Vibe is ordinary client work — create a Vibe, add the same object references — and needs no protocol operation.
 
 ---
 
@@ -418,7 +418,7 @@ Initial property vocabularies (full JSON Schemas at `/schemas/0.1/types/`):
 
 Recorded so the punts are decisions, not oversights:
 
-1. **Decentralized identity.** URI shapes are DID- and account-abstraction-compatible; the trust model isn't specified. One reference store first.
+1. **Decentralized identity.** Identity URIs are opaque, so DID methods and account-abstraction schemes can be layered on later as resolution methods; neither their syntax nor their trust model is specified here. One reference store first.
 2. **End-to-end encryption of elements.** At-rest and in-flight encryption are implementation duties; E2EE pods are a 0.x milestone, not 0.1.
 3. **Inter-store federation.** The wire protocol between stores isn't specified. Federation waits for a second implementer.
 4. **A query language.** `selection` filters are deliberately primitive. No SPARQL. If a real need emerges, it will be JSON-native.

@@ -394,9 +394,9 @@
     }
   },
   {
-    "name": "rejects duplicate objects in a Vibe",
+    "name": "accepts duplicate object placements in a Vibe",
     "schema": "vibe",
-    "valid": false,
+    "valid": true,
     "document": {
       "rnet_schema": "0.1",
       "uri": "rnet://vibe/018f1f4e-7b3a-7cc1-8b7a-123456789ad3",
