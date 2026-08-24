@@ -103,24 +103,37 @@ export function validateSchema<Name extends SchemaName>(
   return result(validators[schema] as ValidateFunction<SchemaTypes[Name]>, value);
 }
 
-export function validateMediaObject(value: unknown): ValidationResult<MediaObject> {
-  const core = result(validators["media-object"], value);
-  if (!core.ok) return core;
-
-  const vocabulary = Object.hasOwn(OBJECT_TYPES_REGISTRY, core.value.type)
-    ? OBJECT_TYPES_REGISTRY[core.value.type]
+export function validateMediaObjectProperties<Properties>(
+  type: string,
+  properties: Properties,
+  instancePath = "",
+): ValidationResult<Properties> {
+  const vocabulary = Object.hasOwn(OBJECT_TYPES_REGISTRY, type)
+    ? OBJECT_TYPES_REGISTRY[type]
     : undefined;
-  if (!vocabulary) return core;
+  if (!vocabulary) return { ok: true, value: properties };
 
-  const properties = core.value.source.properties;
   const typed = result(vocabulary, properties);
-  if (typed.ok) return core;
+  if (typed.ok) return { ok: true, value: properties };
 
   return {
     ok: false,
     issues: typed.issues.map((issue) => ({
       ...issue,
-      instancePath: `/source/properties${issue.instancePath}`,
+      instancePath: `${instancePath}${issue.instancePath}`,
     })),
   };
+}
+
+export function validateMediaObject(value: unknown): ValidationResult<MediaObject> {
+  const core = result(validators["media-object"], value);
+  if (!core.ok) return core;
+
+  const typed = validateMediaObjectProperties(
+    core.value.type,
+    core.value.source.properties,
+    "/source/properties",
+  );
+  if (typed.ok) return core;
+  return typed;
 }

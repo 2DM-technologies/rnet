@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import { RNET_SCHEMA_VERSION, validateMediaObject, validateSchema } from "../src/index.ts";
+import {
+  RNET_SCHEMA_VERSION,
+  validateMediaObject,
+  validateMediaObjectProperties,
+  validateSchema,
+} from "../src/index.ts";
 
 const uuid = "018f1f4e-7b3a-7cc1-8b7a-123456789abc";
 const originUuid = "018f1f4e-7b3a-7cc1-8b7a-123456789abd";
@@ -46,6 +51,22 @@ describe("canonical schema behavior", () => {
         source: { ...transaction.source, properties: { amount: "-4.50", currency: "USD" } },
       }).ok,
     ).toBe(true);
+  });
+
+  test("validates an object type vocabulary without requiring a wire envelope", () => {
+    expect(validateMediaObjectProperties("track", { artist: "Missing title" }).ok).toBe(false);
+    expect(validateMediaObjectProperties("track", { title: "A track" }).ok).toBe(true);
+    expect(validateMediaObjectProperties("custom", { anything: true }).ok).toBe(true);
+
+    const invalid = validateMediaObjectProperties(
+      "transaction",
+      { amount: "-4.50" },
+      "/objects/0/properties",
+    );
+    expect(invalid.ok).toBe(false);
+    if (!invalid.ok) {
+      expect(invalid.issues[0]?.instancePath.startsWith("/objects/0/properties")).toBe(true);
+    }
   });
 
   test("separates UUID record identity from payload identity", () => {
