@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-rNet defines a standardized interface between **media curated by users** and **AI-powered applications**. The protocol is deliberately small: it specifies the **nouns** (Media Elements, Media Objects, Origin Artifacts, Vibes), the **store operations** on them, and the **conformance rules at the store's two edges** — the nouns and their conformance rules (§2), and what access control must mean (§3).
+rNet defines a standardized interface between **media curated by users** and **AI-powered applications**. The protocol is deliberately small: it specifies the **nouns** (Media Elements, Media Objects, Origin Artifacts, Vibes), the **semantics** a store must honour when operating on them (§4), and the **conformance rules at the store's two edges** — the nouns and their conformance rules (§2), and what access control must mean (§3). It specifies no transport; how a store is reached is an implementation concern.
 
 Everything else is product, not protocol:
 
@@ -17,12 +17,12 @@ Everything else is product, not protocol:
 | Element / Object / Origin / Vibe definitions | **Protocol** (§2) |
 | Grants & scopes — access-control semantics | **Protocol** (§3) |
 | Source-block conformance — provenance & determinism disclosure | **Protocol** (§2.3) |
-| Store API — CRUD, push, pull | **Protocol** (§5) |
+| Store semantics — identity, creation, access, push, pull | **Protocol** (§4) |
 | How ingestion is implemented (skills, agents, parsers) | Implementation (reference: Rhizome ingestion runtime) |
 | How machines (client applications) are built, registered, sandboxed, metered, billed | Implementation (reference: Rhizome dMachine SDK) |
 | Identity issuance and authentication | Implementation (URI shapes are DID-compatible; see §8) |
 
-**The test for protocol membership:** would two independent store implementations that disagreed on this fail to interoperate? Machine manifests fail that test — a client built against one store's SDK simply doesn't run on another, which is a product gap, not a protocol breach. Copying a Vibe fails it too: it is `POST /vibes` plus `POST /vibes/{id}/objects`, so no store needs to agree on a "fork" operation for the two to interoperate. Scope semantics pass it — a store that let a `write:user` grant touch `source` blocks would corrupt every client's trust model.
+**The test for protocol membership:** would two independent store implementations that disagreed produce documents or behaviours with incompatible meaning? Machine manifests fail that test — a client built against one store's SDK simply doesn't run on another, which is a product gap, not a protocol breach. Copying a Vibe fails it too: it is Vibe creation plus adding object references, so no store needs to agree on a "fork" operation. Scope semantics pass it — a store that let a `write:user` grant touch `source` blocks would corrupt every client's trust model.
 
 ### 1.1 Design principles
 
@@ -289,7 +289,7 @@ A dynamic, owned collection of MediaObjects, plus the state that makes it living
 
 ## 3. Grants & Scopes
 
-What access control MUST mean in any store. A store that implements these semantics can safely host clients it has never seen; a client written against these semantics can couple to any conformant store.
+What access control MUST mean in any store. A store that implements these semantics can safely host clients it has never seen; once connected through a store's implementation-defined binding, a client can rely on the same authorization model everywhere.
 
 ### 3.1 Grants
 
@@ -304,7 +304,7 @@ A grant is `{subject, scope[]}` attached to a Vibe. Subjects are opaque strings 
 
 ### 3.2 Scopes
 
-| Scope | Permits | Hard limits (conformance-tested) |
+| Scope | Permits | Required hard limits |
 |---|---|---|
 | `read` | Fetch the Vibe, its objects, their elements | **Never includes origin artifacts.** Origins are owner-only and not delegable by any scope — a raw export is strictly more revealing than the objects parsed from it. |
 | `write:user` | Mutate `user` blocks of objects in the Vibe | MUST NOT touch `source`, `inferred`, `keys`, `type`, or `elements`. Revision-protected (§6.2). |
@@ -313,7 +313,7 @@ A grant is `{subject, scope[]}` attached to a Vibe. Subjects are opaque strings 
 | `push` | Invoke push operations (§4.3) on the Vibe | Writes land only in `inferred` blocks (object- and Vibe-level). |
 | `pull` | Invoke a pull on the Vibe's already-configured sources | Cannot modify pull configuration and cannot read origins — both are owner-only, exercised through the store's own surfaces. This is the refresh button, nothing more. |
 
-Scope semantics are **store-enforced, always** — never client-honor-system. Grants are set by the owner alone — no scope delegates the ability to grant (§8). The conformance suite's tests are: `write:user` cannot corrupt `source`; `write:objects` cannot import a pre-existing object from another Vibe; `push` cannot write `user`; no scope exposes origins; `pull` cannot rewrite pull configuration; revoked grants fail closed.
+Scope semantics are **store-enforced, always** — never client-honor-system. Grants are set by the owner alone — no scope delegates the ability to grant (§8). The hard limits are: `write:user` cannot corrupt `source`; `write:objects` cannot import a pre-existing object from another Vibe; `push` cannot write `user`; no scope exposes origins; `pull` cannot rewrite pull configuration; revoked grants fail closed.
 
 ### 3.3 Owner supremacy
 
@@ -325,96 +325,52 @@ The Vibe owner holds all scopes implicitly, can revoke any grant at any time, an
 
 ---
 
-## 4. Store API
+## 4. Store Semantics
 
-Base URL: `https://{host}/rnet/v0`. Auth: bearer credential bound to an `id:` or `client:` subject; issuance is implementation-defined. Structured bodies are `application/json` except the multipart atomic creation endpoint described below; payload-upload endpoints accept their declared media type.
+What a store MUST do, independent of how it is reached. rNet does not specify a transport: a store may expose these semantics over HTTP, over an RPC protocol, or as a local library, and two stores that make different choices there still implement the same protocol. What follows is what they cannot differ on.
 
-### 4.1 Vibes
+### 4.1 Identity and creation
 
-| Method | Path | Scope | Description |
-|---|---|---|---|
-| `POST` | `/vibes` | (owner) | Create a Vibe. Body: `{title, pull?, grants?}` |
-| `GET` | `/vibes/{id}` | `read` | Fetch Vibe (metadata + object URIs, paginated in stored order) |
-| `GET` | `/vibes/{id}/objects?expand=full` | `read` | Fetch with objects expanded as `{mediaObjects: MediaObject[]}`, preserving stored order |
-| `PATCH` | `/vibes/{id}` | (owner) | Title, pull config, grants |
-| `DELETE` | `/vibes/{id}` | (owner) | Delete Vibe (objects survive if referenced elsewhere; orphans GC'd) |
-| `POST` | `/vibes/{id}/objects` | (owner) | Add existing object refs, appending in request order. Every added object MUST have the same `owner` as the Vibe. |
-| `DELETE` | `/vibes/{id}/objects` | (owner) | Remove refs (never deletes underlying objects) |
+**The store mints record identity.** Every `uri` is a store-assigned UUIDv7 (§2.3). A creation request MUST NOT carry `uri`, `owner`, or `rnet_schema`, and a store MUST reject supplied values rather than ignoring them — silently overwriting a client's identity claim hides a client bug that will surface later as missing data.
 
-### 4.2 Objects, Elements & Origins
+**Ownership is assigned, never asserted.** `owner` is set by the store at creation and is immutable. Records created under a delegated grant inherit the authorizing Vibe's owner. An object added to a Vibe MUST have the same `owner` as that Vibe; cross-owner references are rejected until sharing semantics exist (§8).
 
-| Method | Path | Scope | Description |
-|---|---|---|---|
-| `POST` | `/objects` | (owner) or `write:objects` | Atomically create MediaObject(s), any newly uploaded MediaElements they reference, and optional Vibe membership. Multipart format below. Returns `{mediaObjects: MediaObject[]}`. The store mints each object's UUIDv7 `uri` and assigns immutable `owner`; request objects MUST omit `uri`, `owner`, and `rnet_schema`, and the store MUST reject supplied values. A subject holding `write:objects` must name the authorizing Vibe and may create only `authored` objects owned by that Vibe's owner, grounded in its own `rnet://client/` origin. Ingested objects come from the pull pipeline. Rejected unless the `source` block conforms (§2.3). |
-| `GET` | `/objects/{id}` | `read` | Fetch object |
-| `PATCH` | `/objects/{id}/user` | `write:user` | Mutate `user` block only. `source` is never PATCHable. |
-| `PUT` | `/objects/{id}/inferred` | `push` or `write:inferred` | Write an `inferred` entry. The two scopes differ in *whose* namespace may be written: `push` lands results under the store's writer prefix; `write:inferred` lets a subject write under its own registered name and nothing else. |
-| `POST` | `/elements` | (owner) | Create a detached immutable element record and upload its payload. Delegated clients must upload new elements atomically through `POST /objects`. |
-| `GET` | `/elements/{id}` | `read` | Fetch element metadata and a retrievable payload URL. The element must be reachable through a Vibe the caller can read; knowing its UUID or `content_hash` grants nothing. |
-| `POST` | `/origins` | (owner) | Create an immutable origin record and upload its raw source payload. The record owner is the authenticated user. Returns `owner`, a UUID URI, and `content_hash`. |
-| `GET` | `/origins/{id}` | (owner) | Fetch origin artifact metadata and a retrievable payload URL. |
+**Creation is rejected unless the `source` block conforms** to §2.3, including the registered type vocabulary for the object's `type` where one exists (§7).
 
-**Atomic object and element creation.** `POST /objects` uses `multipart/form-data`. The required
-`metadata` text part is JSON with the normal `{vibe?, objects}` envelope. An ordered `elements`
-entry may be an existing element URI or an upload descriptor:
+**Element reachability is not implied by knowledge.** Reading an element requires that it be reachable through a Vibe the caller can read. Knowing a UUID or a `content_hash` grants nothing — identifiers are not capabilities.
 
-```json
-{
-  "vibe": "rnet://vibe/018f1f4e-7b3a-7cc1-8b7a-123456789abc",
-  "objects": [
-    {
-      "type": "note",
-      "elements": [{ "upload": "body", "kind": "text", "mime": "text/plain" }],
-      "properties": { "title": "Example" }
-    }
-  ]
-}
-```
+### 4.2 Atomic creation
 
-Each descriptor's `upload` names one binary form part and `mime` declares its media type. If the
-multipart parser exposes a media type for the binary part, it MUST agree with the descriptor.
-Every binary part MUST be referenced, every descriptor MUST resolve, and conflicting `kind` values
-or `mime` values for a shared upload name MUST be rejected. The store may stage content-addressed bytes before its
-database transaction, but the element records, objects, ordered references, provenance, revisions,
-and Vibe memberships MUST commit together. Failed transactions leave no reachable element record;
-unreferenced staged bytes are garbage-collected.
+An object, any element records created with it, their ordered references, its provenance links, its initial revisions, and its Vibe membership **MUST commit together**. A failed creation leaves no reachable element record.
 
-### 4.3 Push & Pull
+A store MAY stage content-addressed bytes before committing, since payloads are content-addressed and therefore idempotent to write. Unreferenced staged bytes are garbage-collected (§6.3).
 
-The two modalities of Vibe–model interaction.
+This is what makes delegated authoring safe to reason about: a client holding `write:objects` cannot create a detached element, so there is no window in which an element exists without the object that justifies it.
 
-**`POST /vibes/{id}/push`** (scope: `push`) — Send the Vibe (or a selection) to a model for analysis.
+### 4.3 Vibe–model interaction
 
-```json
-{
-  "target": "model:claude-sonnet-4-6",
-  "selection": { "type": ["transaction"], "since": "2026-07-01" },
-  "task": "categorize",
-  "write_back": "inferred"
-}
-```
+The two modalities by which a Vibe engages a model. Both are asynchronous: a store accepts the request, returns a handle, and completes the work independently.
 
-The store assembles context (the Vibe's inferred summary + selected objects), invokes the target, and — if `write_back` is set — lands results in inferred blocks at the object and/or Vibe level, keyed under the store's own writer namespace. Push is how a Vibe *thinks about itself*, with or without any client attached.
+**Push** — send the Vibe, or a selection from it, to a model for analysis. The store assembles context (the Vibe's inferred summary plus the selected objects), invokes the target, and lands results in `inferred` blocks at the object and/or Vibe level, keyed under **the store's own writer namespace**. Push is how a Vibe *thinks about itself*, with or without any client attached. Push writes reach `inferred` and nothing else.
 
-**Task names are store-defined.** `categorize` on one store need not exist on another; clients should discover available tasks rather than assume a vocabulary. The operation's shape is protocol, its task list is local — the same split as skill identifiers in `source.ingest`.
+**Task names are store-defined.** `categorize` on one store need not exist on another; clients SHOULD discover a store's available tasks rather than assume a vocabulary. The operation's shape is protocol, its task list is local — the same split as skill identifiers in `source.ingest`.
 
-**`POST /vibes/{id}/pull`** (scope: `pull`) — Ask configured sources for new objects.
+**Pull** — ask a Vibe's already-configured sources for new objects. The store invokes its ingestion runtime, receives candidate MediaObjects, and applies the Vibe's pull policy (§2.4). Pull cannot modify pull configuration, and cannot read origins; both are owner-only.
 
-```json
-{
-  "sources": ["skill:ofx@^0.3"],
-  "mode": "append_new",
-  "dry_run": false
-}
-```
+**Dry run is a required gate, not a convenience.** A dry run returns candidates without committing them. Stores SHOULD require dry-run review for any ingestion that is not `reproducible: true` (§2.3) — freehand extraction is exactly the case a human should see before it becomes canonical `source` data.
 
-Invoke the ingestion runtime, receive candidate MediaObjects, apply the pull policy. With `dry_run: true`, candidates are returned but not committed — the substrate for suggest/review UX, and the gate stores SHOULD require for ingestion that is not `reproducible: true`.
+### 4.4 Failure conditions
 
-Both return an `operation_id`; long-running ops are polled at `GET /operations/{id}`.
+Stores differ on how failures are encoded; they MUST NOT differ on what constitutes one, or on what the caller is told.
 
-### 4.4 Errors
+| Condition | The caller MUST be able to determine |
+|---|---|
+| A `user` write carries a stale revision | That the write conflicted, and the current revision |
+| A required scope is not held | That authorization failed, **and which scope was missing** |
+| A document violates its schema | That validation failed, and where — a JSON Schema pointer into the offending document |
+| A `source` block fails §2.3 | That the ingest record was non-conformant, and **which rule** it failed |
 
-RFC 9457 problem+json. Notable codes: `409 revision_conflict` (stale `user` write), `403 grant_missing` (scope not held, with the missing scope named), `422 schema_violation` (with JSON Schema pointer), `422 ingest_nonconformant` (`source` block fails §2.3, with the failing rule identified).
+Naming the missing scope and the failing rule is the part that matters: a caller that only learns "denied" cannot correct itself, and a client author debugging against an unfamiliar store has nothing to go on.
 
 ---
 
@@ -427,13 +383,13 @@ RFC 9457 problem+json. Notable codes: `409 revision_conflict` (stale `user` writ
 
 ---
 
-## 6. Semantics
+## 6. Record Lifecycle
 
 ### 6.1 Versioning
 `rnet_schema` follows semver-lite: `0.x` may break; from `1.0`, additive-only within a major. Consumers MUST reject majors they don't understand and MUST ignore unknown top-level `x-*` fields, which makes namespaced document evolution non-breaking without opening embedded control records to accidental extension.
 
 ### 6.2 Revisions
-`source` and `user` blocks carry monotonic revision counters (store-assigned). Writes to `user` require the current revision (`If-Match`) — last-write-wins is not acceptable for user data.
+`source` and `user` blocks carry monotonic revision counters (store-assigned). A write to `user` MUST name the revision it expects to replace, and the store MUST reject a stale revision — last-write-wins is not acceptable for user data. How that precondition is encoded is transport-specific.
 
 `inferred` entries are versioned in the store's revision log like every other block, so superseded readings remain retrievable — which matters more than it would for pure task output, since accumulated entries cannot be recomputed. They carry no concurrency check: two runs of the same task are independent re-derivations rather than conflicting edits, so the later one wins. Task-keying already prevents the collision that would matter — distinct tasks write distinct keys and cannot clobber each other.
 
@@ -476,32 +432,33 @@ Recorded so the punts are decisions, not oversights:
 
 ## Appendix A: End-to-end example — a budgeting client
 
+Operations, not routes: a store binds these to whatever transport it exposes.
+
 ```
- 1. POST /origins                     ← chase_export_2026-08.qfx bytes
-                                        (UUID origin record + content-addressed payload)
- 2. POST /vibes                       ← {"title": "Brooklyn Spending", "pull": {...}}
- 3. POST /vibes/{id}/pull             ← runtime loads the ingestion skill, parses,
-      {dry_run: true}                   verifies invariants (counts, totals),
-                                        returns 214 candidate transaction objects —
-                                        zero elements, meaning in properties,
-                                        ingest: {method: "parser", reproducible: true},
-                                        source.origins → the stored origin UUID
+ 1. create an origin              ← chase_export_2026-08.qfx bytes
+                                    (UUID origin record + content-addressed payload)
+ 2. create a Vibe                 ← {"title": "Brooklyn Spending", "pull": {...}}
+ 3. pull, dry run                 ← runtime loads the ingestion skill, parses,
+                                    verifies invariants (counts, totals),
+                                    returns 214 candidate transaction objects —
+                                    zero elements, meaning in properties,
+                                    ingest: {method: "parser", reproducible: true},
+                                    source.origins → the stored origin UUID
  4. (review UI: "214 transactions, totals reconcile ✓") → user confirms
- 5. POST /vibes/{id}/pull             ← committed
-      {dry_run: false}
- 6. POST /vibes/{id}/push             ← task: "categorize"; results land under the
-                                        store's writer key, e.g. rhizome:categorize
- 7. client:rbudget is granted         ← ["read", "write:user", "push"]
- 8. GET /vibes/{id}/objects           ← renders; user edits a category
-    PATCH /objects/{id}/user            (If-Match: user_rev) → sticky forever
- 9. Monthly: steps 3–6 repeat via pull config; the Vibe stays alive.
+ 5. pull, committed
+ 6. push                          ← task: "categorize"; results land under the
+                                    store's writer key, e.g. rhizome:categorize
+ 7. client:rbudget is granted     ← ["read", "write:user", "push"]
+ 8. read the Vibe's objects       ← renders; user edits a category
+    write the user block            (at the current revision) → sticky forever
+ 9. Monthly: steps 3-6 repeat via pull config; the Vibe stays alive.
 
 Novel-format variant of step 3: unknown CSV dialect → runtime generates a parser,
 records parser_hash under method `generated_parser`, and dry-run review is REQUIRED
 before commit.
 ```
 
-Time from raw export to a working personal budgeting client: one consent screen and two API calls. That is the demo, and the thesis.
+Time from raw export to a working personal budgeting client: one consent screen and a handful of operations. That is the demo, and the thesis.
 
 ---
 

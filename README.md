@@ -1,6 +1,8 @@
 # rNet
 
-rNet is an open protocol for connecting user-curated media to AI-powered applications. This repository contains the canonical protocol specification, JSON Schemas, generated TypeScript types and validators, and the conformance suite.
+rNet is an open protocol for connecting user-curated media to AI-powered applications. It specifies a **data model** and its **semantics** — the nouns, their conformance rules, and what access control must mean. It deliberately does not specify a transport: how a store exposes these objects over HTTP, gRPC, or a local library is an implementation concern.
+
+This repository contains the canonical protocol specification, JSON Schemas, and generated TypeScript types and validators.
 
 The source-of-truth order is:
 
@@ -18,22 +20,11 @@ bun run codegen
 bun run check
 ```
 
-`bun run codegen:check` verifies that committed generated sources match the canonical schemas. `bun run conformance` runs the schema fixture suite.
-
-Run the HTTP conformance suite against a store with:
-
-```sh
-bun run packages/conformance/src/cli.ts run \
-  --target http://localhost:3000 \
-  --owner-token dev:user \
-  --other-owner-token dev:user:other \
-  --client-token dev:client:rbudget
-```
+`bun run codegen:check` verifies that committed generated sources match the canonical schemas. `bun test` runs the validator tests, including the document fixtures in [`packages/types/test/fixtures/`](./packages/types/test/fixtures/) that assert the accept/reject rules in the spec.
 
 ## Packages
 
 - `@rnet/types` — isomorphic TypeScript types and AJV-backed JSON Schema validators.
-- `@rnet/conformance` — isomorphic conformance helpers, fixtures, and a separate CLI entry point.
 
 ## License
 
