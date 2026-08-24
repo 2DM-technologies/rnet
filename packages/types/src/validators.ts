@@ -107,7 +107,9 @@ export function validateMediaObject(value: unknown): ValidationResult<MediaObjec
   const core = result(validators["media-object"], value);
   if (!core.ok) return core;
 
-  const vocabulary = OBJECT_TYPES_REGISTRY[core.value.type];
+  const vocabulary = Object.hasOwn(OBJECT_TYPES_REGISTRY, core.value.type)
+    ? OBJECT_TYPES_REGISTRY[core.value.type]
+    : undefined;
   if (!vocabulary) return core;
 
   const properties = core.value.source.properties;

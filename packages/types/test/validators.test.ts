@@ -23,17 +23,29 @@ describe("canonical schema behavior", () => {
       rnet_schema: RNET_SCHEMA_VERSION,
       uri: `rnet://object/${uuid}`,
       owner,
-      type: "transaction",
+      type: "track",
       elements: [],
       source: {
         ingest: { method: "parser", reproducible: true },
         origins: [`rnet://origin/${originUuid}`],
-        properties: { amount: -4.5 },
+        properties: { artist: "Missing title" },
       },
     };
 
     expect(validateSchema("media-object", object).ok).toBe(true);
     expect(validateMediaObject(object).ok).toBe(false);
+    const transaction = {
+      ...object,
+      type: "transaction",
+      source: { ...object.source, properties: { amount: "-4.50" } },
+    };
+    expect(validateMediaObject(transaction).ok).toBe(false);
+    expect(
+      validateMediaObject({
+        ...transaction,
+        source: { ...transaction.source, properties: { amount: "-4.50", currency: "USD" } },
+      }).ok,
+    ).toBe(true);
   });
 
   test("separates UUID record identity from payload identity", () => {

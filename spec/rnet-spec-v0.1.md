@@ -29,7 +29,7 @@ Everything else is product, not protocol:
 1. **JSON-first, RDF-compatible.** Plain JSON with a published `@context` escape hatch. No triples required, ever.
 2. **Provenance separation.** Source data, user edits, and model inferences live in separately named blocks. Source is canonical and immutable; inference is revisable, and some of it accumulates rather than being recomputed (§2.3).
 3. **Never discard the original.** The bytes a user actually handed over — the bank export, the API response, the uploaded file — are stored as a content-addressed payload referenced by an immutable, UUID-identified OriginArtifact (§2.2), separate from media elements. Ingestion can always be re-run against ground truth.
-4. **Namespaced extensibility.** Core fields are reserved; anyone may extend via `x-{namespace}:*` keys without coordination.
+4. **Namespaced extensibility.** Core fields are reserved; anyone may extend the top level of a core stored document via `x-{namespace}` keys without coordination. Embedded control records and property blocks remain closed unless their schema says otherwise.
 5. **Global identity.** Every object has a globally unique URI. External global keys (ISRC, ISBN, FITID) are first-class join keys.
 6. **Determinism is disclosed, not assumed.** Every ingested object declares how reproducibly it was produced. Consumers price the trust.
 7. **Intelligence at read time.** Semantic understanding is inferred by models, not encoded by authors. The schema is a dumb, honest container — never a knowledge representation.
@@ -149,7 +149,7 @@ The core unit of meaning: properties plus zero or more MediaElements, carrying *
     "origins": ["rnet://origin/0198f2a1-a09b-76aa-95d8-fc5b55b41fd2"],
     "retrieved_at": "2026-08-15T22:04:11Z",
     "properties": {
-      "amount": -6.50,
+      "amount": "-6.50",
       "currency": "USD",
       "posted_at": "2026-08-14",
       "raw_description": "COFFEE SHOP #443 BROOKLYN NY"
@@ -192,7 +192,7 @@ The core unit of meaning: properties plus zero or more MediaElements, carrying *
 }
 ```
 
-The first two entries are store task output: re-running the task recomputes them, and each replaces only its own key. The third was written by a client holding `write:inferred`, under its own namespace, and carries `durable: true` — it records something learned rather than computed, so no re-run may replace it. `durable` defaults to false and is omitted where it does not apply.
+The first two entries are store task output: re-running the task recomputes them, and each replaces only its own key. The third was written by a client holding `write:inferred`, under its own namespace, and carries `durable: true` — it records something learned rather than computed, so no re-run may replace it. A direct user write is keyed as `user/{user_uuid}:{task}`; the caller supplies only the bare task and the store assigns that prefix. `durable` defaults to false and is omitted where it does not apply.
 
 When elements *do* attach to a transaction, they are files: an emailed receipt (one `document` element), a check image, the prose of a memo. Fields-versus-files (§2.1) is the membership rule.
 
@@ -200,8 +200,8 @@ When elements *do* attach to a transaction, they are files: an emailed receipt (
 |---|---|---|
 | `source` | Ingestion runtimes only | Immutable after ingest. Re-ingestion creates a new revision, never edits in place. |
 | `user` | The owner, via clients holding `write:user` | Freely mutable by owner. Revision-protected (§6.2). |
-| `inferred` | Models, via push operations; clients holding `write:inferred` | **A map keyed by writer and task** — the store's analyses under its identifier (`rhizome:categorize`), a client's under its registered name (`rbudget:forecast`). Writers are globally unique within a store, so keys cannot collide and there is no unprefixed case. Each entry carries its own `model`, `inferred_at`, optional `confidence`, and `properties`, so the metadata describes exactly one inference. **This block is memory scoped to the record.** Some entries are task output, recomputed from `source` whenever the task re-runs. Others accumulated — a user's correction, a pattern an agent noticed across several objects, an understanding built over a conversation — and re-running a task cannot reproduce them. Entries of the second kind set `durable: true`, and a push task MUST NOT replace a durable entry. A task can never set the flag on its own output — `durable` means *cannot be reproduced by re-running*, and task output is by definition what re-running produces — so only agent runs and user-driven writes may set it. Otherwise a re-run replaces only its own key. Consumers MUST treat entries as advisory. |
-| `x-*` | Anyone, namespaced | Consumers MUST ignore namespaces they don't understand. |
+| `inferred` | Models, via push operations; clients and users holding `write:inferred` | **A map keyed by writer and task** — the store's analyses under its identifier (`rhizome:categorize`), a client's under its registered name (`rbudget:forecast`), and a user's under `user/{user_uuid}` (`user/018f…:correction`). Callers provide a bare task name; the store assigns the authenticated writer prefix. Writers are globally unique within a store, so keys cannot collide and there is no unprefixed case. Each entry carries its own `model`, `inferred_at`, optional `confidence`, and `properties`, so the metadata describes exactly one inference. **This block is memory scoped to the record.** Some entries are task output, recomputed from `source` whenever the task re-runs. Others accumulated — a user's correction, a pattern an agent noticed across several objects, an understanding built over a conversation — and re-running a task cannot reproduce them. Entries of the second kind set `durable: true`, and a push task MUST NOT replace a durable entry. A task can never set the flag on its own output — `durable` means *cannot be reproduced by re-running*, and task output is by definition what re-running produces — so only agent runs and user-driven writes may set it. Otherwise a re-run replaces only its own key. Consumers MUST treat entries as advisory. |
+| `x-*` | Anyone, namespaced | Legal only at the top level of the core stored document. Consumers MUST ignore namespaces they don't understand. |
 
 **The `source` block.** Written at creation, immutable afterward, and structurally required to ground itself — every object points at what it came from, with no exceptions. Ingestion is one way an object comes to be; authoring in a client is another.
 
@@ -229,7 +229,7 @@ Skill and parser identifiers are meaningful within the store that produced them;
 | Field | Notes |
 |---|---|
 | `rnet_schema` | Protocol version this document was written under. Required on every stored document — origins, elements, objects, and Vibes alike — so each is self-describing and a future migration can run incrementally. Documents carry **no `$schema` field**: a validator is pointed at a schema by the application through a registry keyed on `$id`, and storing a hosting URL alongside a version pin would duplicate the same fact in two forms that can disagree. |
-| `uri` | `rnet://object/{uuid}` — a UUIDv7. Objects, elements, and origins have record identity independent of any payload hash; objects may mutate under revision control, while element and origin records are immutable. |
+| `uri` | `rnet://object/{uuid}` — a store-minted UUIDv7. Objects, elements, and origins have record identity independent of any payload hash; objects may mutate under revision control, while element and origin records are immutable. Clients do not choose record identifiers. |
 | `owner` | Immutable `rnet://id/{opaque}` identity assigned by the store at creation. Ownership governs administration, not delegated access. |
 | `type` | Open vocabulary with registered core types (§7). Unregistered types are legal. |
 | `elements` | Ordered list of MediaElement URIs. MAY be empty. |
@@ -309,7 +309,7 @@ A grant is `{subject, scope[]}` attached to a Vibe. Subjects are opaque strings 
 | `read` | Fetch the Vibe, its objects, their elements | **Never includes origin artifacts.** Origins are owner-only and not delegable by any scope — a raw export is strictly more revealing than the objects parsed from it. |
 | `write:user` | Mutate `user` blocks of objects in the Vibe | MUST NOT touch `source`, `inferred`, `keys`, `type`, or `elements`. Revision-protected (§6.2). |
 | `write:objects` | Atomically create objects and their new elements for the Vibe | Created records inherit the Vibe's owner. Created objects carry `source.ingest.method: "authored"` and an origin naming the creating client (`rnet://client/{uuid}`). `source` is immutable once written, as always. New element uploads MUST be committed with the object that first references them; the scope does not authorize detached element creation or attaching a pre-existing object. |
-| `write:inferred` | Write `inferred` entries directly, without a server-mediated push | The writer half of the key MUST be the subject's own registered name, store-enforced — no subject can write under another's namespace or the store's. |
+| `write:inferred` | Write `inferred` entries directly, without a server-mediated push | The caller supplies a bare task name and the store assigns the writer half: a client uses its registered name and a user uses `user/{user_uuid}`. No subject can write under another's namespace or the store's. Client/task output MUST NOT set `durable: true`; durable entries are reserved for user-driven or accumulated writes that cannot be reproduced by rerunning a task. |
 | `push` | Invoke push operations (§4.3) on the Vibe | Writes land only in `inferred` blocks (object- and Vibe-level). |
 | `pull` | Invoke a pull on the Vibe's already-configured sources | Cannot modify pull configuration and cannot read origins — both are owner-only, exercised through the store's own surfaces. This is the refresh button, nothing more. |
 
@@ -345,7 +345,7 @@ Base URL: `https://{host}/rnet/v0`. Auth: bearer credential bound to an `id:` or
 
 | Method | Path | Scope | Description |
 |---|---|---|---|
-| `POST` | `/objects` | (owner) or `write:objects` | Atomically create MediaObject(s), any newly uploaded MediaElements they reference, and optional Vibe membership. Multipart format below. Returns `{mediaObjects: MediaObject[]}`. The store assigns immutable `owner`; it MUST ignore or reject a conflicting client-supplied value. A subject holding `write:objects` must name the authorizing Vibe and may create only `authored` objects owned by that Vibe's owner, grounded in its own `rnet://client/` origin. Ingested objects come from the pull pipeline. Rejected unless the `source` block conforms (§2.3). |
+| `POST` | `/objects` | (owner) or `write:objects` | Atomically create MediaObject(s), any newly uploaded MediaElements they reference, and optional Vibe membership. Multipart format below. Returns `{mediaObjects: MediaObject[]}`. The store mints each object's UUIDv7 `uri` and assigns immutable `owner`; request objects MUST omit `uri`, `owner`, and `rnet_schema`, and the store MUST reject supplied values. A subject holding `write:objects` must name the authorizing Vibe and may create only `authored` objects owned by that Vibe's owner, grounded in its own `rnet://client/` origin. Ingested objects come from the pull pipeline. Rejected unless the `source` block conforms (§2.3). |
 | `GET` | `/objects/{id}` | `read` | Fetch object |
 | `PATCH` | `/objects/{id}/user` | `write:user` | Mutate `user` block only. `source` is never PATCHable. |
 | `PUT` | `/objects/{id}/inferred` | `push` or `write:inferred` | Write an `inferred` entry. The two scopes differ in *whose* namespace may be written: `push` lands results under the store's writer prefix; `write:inferred` lets a subject write under its own registered name and nothing else. |
@@ -430,7 +430,7 @@ RFC 9457 problem+json. Notable codes: `409 revision_conflict` (stale `user` writ
 ## 6. Semantics
 
 ### 6.1 Versioning
-`rnet_schema` follows semver-lite: `0.x` may break; from `1.0`, additive-only within a major. Consumers MUST reject majors they don't understand and MUST ignore unknown fields — which, with `x-*` namespacing, makes most evolution non-breaking.
+`rnet_schema` follows semver-lite: `0.x` may break; from `1.0`, additive-only within a major. Consumers MUST reject majors they don't understand and MUST ignore unknown top-level `x-*` fields, which makes namespaced document evolution non-breaking without opening embedded control records to accidental extension.
 
 ### 6.2 Revisions
 `source` and `user` blocks carry monotonic revision counters (store-assigned). Writes to `user` require the current revision (`If-Match`) — last-write-wins is not acceptable for user data.
@@ -446,13 +446,13 @@ Payload deletion is reference-aware. A store MUST NOT delete physical bytes whil
 
 ## 7. Registered Core Types (v0.1)
 
-Initial property vocabularies (all optional beyond what's shown; full JSON Schemas at `/schemas/0.1/types/`):
+Initial property vocabularies (full JSON Schemas at `/schemas/0.1/types/`):
 
-**`transaction`** — `amount` (signed decimal, required), `currency` (ISO 4217, required), `posted_at`, `raw_description`. Keys: `fitid`. Typically zero elements (§2.1): every field here is queried on. Attached files — receipts, check images — are the element case.
+**`transaction`** — `amount` (signed base-10 decimal string, required), `currency` (ISO 4217, required), `posted_at`, `raw_description`. A string representation preserves exact monetary precision across JSON implementations. Keys: `fitid`. Typically zero elements (§2.1): every field here is queried on. Attached files — receipts, check images — are the element case.
 
 **`track`** — `title`, `artist`, `album`, `duration_ms`, `released` — all fields, since all are queried on. Keys: `isrc` (the cross-service join key). Album art, if stored, is an `image` element. Normally zero elements: audio lives on the platform, so locators go in `keys` and identity/meaning in `source.properties`.
 
-**`post`**, **`photo`**, **`note`**, **`contact`**, **`event`**, **`book`**, **`article`**, **`receipt`** — reserved with minimal vocabularies; fleshed out as their ingestion paths ship.
+**`post`**, **`photo`**, **`note`**, **`contact`**, **`event`**, **`book`**, **`article`**, **`receipt`** — legal open-vocabulary names without a registered v0.1 properties schema. Their vocabularies can be registered as their ingestion paths ship.
 
 **There is deliberately no `document` object type.** `document` is an element *kind* (§2.1) — it names consumption, not meaning. An object whose content is a document element takes the semantic type of what the document *is*: a `book`, an `article`, a `receipt`, a `contract`. Work-level facts (`title`, `author`) and artifact-level facts (`page_count`, `language`) live in those types' vocabularies. The rule generalizes: element kinds name consumption; object types name meaning; neither taxonomy may borrow from the other. (`dataset` failed this rule upward; `document`-as-type failed it downward.)
 

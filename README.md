@@ -10,7 +10,7 @@ The source-of-truth order is:
 
 ## Development
 
-Requires [Bun](https://bun.sh/).
+Requires [Bun](https://bun.sh/). Published TypeScript entry points require Node.js 22.18 or newer when run directly with Node.
 
 ```sh
 bun install
@@ -26,6 +26,7 @@ Run the HTTP conformance suite against a store with:
 bun run packages/conformance/src/cli.ts run \
   --target http://localhost:3000 \
   --owner-token dev:user \
+  --other-owner-token dev:user:other \
   --client-token dev:client:rbudget
 ```
 

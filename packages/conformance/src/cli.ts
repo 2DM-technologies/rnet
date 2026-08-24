@@ -4,24 +4,33 @@ import fixturesJson from "../fixtures/manifest.json" with { type: "json" };
 import { runFixtures, runStoreConformance, type ConformanceFixture } from "./index.ts";
 
 function printUsage(): void {
-  console.error("Usage:\n  rnet-conformance fixtures\n  rnet-conformance run --target <url> --owner-token <token> --client-token <token>");
+  console.error(
+    "Usage:\n  rnet-conformance fixtures\n  rnet-conformance run --target <url> --owner-token <token> --other-owner-token <token> --client-token <token>",
+  );
 }
 
 const command = process.argv[2];
 if (command === "run") {
   const target = flag("--target");
   const ownerToken = flag("--owner-token");
+  const otherOwnerToken = flag("--other-owner-token");
   const clientToken = flag("--client-token");
-  if (!target || !ownerToken || !clientToken) {
+  if (!target || !ownerToken || !otherOwnerToken || !clientToken) {
     printUsage();
     process.exitCode = 2;
   } else {
-    const summary = await runStoreConformance({ target, ownerToken, clientToken });
+    const summary = await runStoreConformance({
+      target,
+      ownerToken,
+      otherOwnerToken,
+      clientToken,
+    });
     for (const check of summary.checks) {
-      console.log(`${check.passed ? "PASS" : "FAIL"} ${check.name}${check.detail ? ` — ${check.detail}` : ""}`);
+      const mark = check.status === "passed" ? "PASS" : check.status === "failed" ? "FAIL" : "SKIP";
+      console.log(`${mark} ${check.name}${check.detail ? ` — ${check.detail}` : ""}`);
     }
-    console.log(`\n${summary.passed} passed, ${summary.failed} failed`);
-    if (summary.failed) process.exitCode = 1;
+    console.log(`\n${summary.passed} passed, ${summary.failed} failed, ${summary.skipped} skipped`);
+    if (summary.failed || summary.skipped) process.exitCode = 1;
   }
 } else if (command !== "fixtures") {
   printUsage();

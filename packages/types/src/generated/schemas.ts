@@ -89,6 +89,9 @@ export const ingestRecordSchema = {
     {
       "description": "parser_hash is REQUIRED when an agent generated the parser.",
       "if": {
+        "required": [
+          "method"
+        ],
         "properties": {
           "method": {
             "const": "generated_parser"
@@ -109,6 +112,9 @@ export const ingestRecordSchema = {
     {
       "description": "Freehand agent extraction is never reproducible.",
       "if": {
+        "required": [
+          "method"
+        ],
         "properties": {
           "method": {
             "const": "agent"
@@ -230,7 +236,7 @@ export const mediaObjectSchema = {
     },
     "type": {
       "type": "string",
-      "description": "Open vocabulary with registered core types (transaction, track, document, post, photo, note, contact, event). Unregistered types are legal.",
+      "description": "Open vocabulary. The registered core vocabulary currently includes transaction and track; unregistered types such as post, photo, note, contact, event, book, article, and receipt remain legal.",
       "minLength": 1,
       "maxLength": 128,
       "pattern": "^[a-z][a-z0-9_.-]*$"
@@ -304,7 +310,7 @@ export const mediaObjectSchema = {
       "type": "object",
       "description": "A map keyed by writer and task: every key is {writer}:{task}. Memory scoped to this record — some entries are task output recomputed from source, others accumulated from corrections and agent observation and cannot be re-derived. A re-run replaces only its own key, and never a durable entry. Consumers MUST treat entries as advisory.",
       "propertyNames": {
-        "pattern": "^[a-z][a-z0-9_-]*:[a-z][a-z0-9_]*$"
+        "pattern": "^(?:[a-z][a-z0-9._-]*|user/[A-Za-z0-9._~-]+):[a-z][a-z0-9_]*$"
       },
       "additionalProperties": {
         "type": "object",
@@ -461,8 +467,9 @@ export const transactionPropertiesSchema = {
   ],
   "properties": {
     "amount": {
-      "type": "number",
-      "description": "Signed decimal. Negative = outflow, positive = inflow, per OFX convention."
+      "type": "string",
+      "description": "Signed base-10 decimal string. Negative = outflow, positive = inflow, per OFX convention. Strings preserve exact monetary precision across implementations.",
+      "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?$"
     },
     "currency": {
       "type": "string",
@@ -571,7 +578,7 @@ export const vibeSchema = {
       "type": "object",
       "description": "A map keyed by writer and task: every key is {writer}:{task}. Memory scoped to this record — some entries are task output recomputed from source, others accumulated from corrections and agent observation and cannot be re-derived. A re-run replaces only its own key, and never a durable entry. Consumers MUST treat entries as advisory. The store's summarize task conventionally writes summary and tags.",
       "propertyNames": {
-        "pattern": "^[a-z][a-z0-9_-]*:[a-z][a-z0-9_]*$"
+        "pattern": "^(?:[a-z][a-z0-9._-]*|user/[A-Za-z0-9._~-]+):[a-z][a-z0-9_]*$"
       },
       "additionalProperties": {
         "type": "object",

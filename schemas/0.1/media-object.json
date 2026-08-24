@@ -29,7 +29,7 @@
     },
     "type": {
       "type": "string",
-      "description": "Open vocabulary with registered core types (transaction, track, document, post, photo, note, contact, event). Unregistered types are legal.",
+      "description": "Open vocabulary. The registered core vocabulary currently includes transaction and track; unregistered types such as post, photo, note, contact, event, book, article, and receipt remain legal.",
       "minLength": 1,
       "maxLength": 128,
       "pattern": "^[a-z][a-z0-9_.-]*$"
@@ -103,7 +103,7 @@
       "type": "object",
       "description": "A map keyed by writer and task: every key is {writer}:{task}. Memory scoped to this record — some entries are task output recomputed from source, others accumulated from corrections and agent observation and cannot be re-derived. A re-run replaces only its own key, and never a durable entry. Consumers MUST treat entries as advisory.",
       "propertyNames": {
-        "pattern": "^[a-z][a-z0-9_-]*:[a-z][a-z0-9_]*$"
+        "pattern": "^(?:[a-z][a-z0-9._-]*|user/[A-Za-z0-9._~-]+):[a-z][a-z0-9_]*$"
       },
       "additionalProperties": {
         "type": "object",

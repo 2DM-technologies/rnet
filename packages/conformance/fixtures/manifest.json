@@ -22,7 +22,7 @@
         ],
         "retrieved_at": "2026-08-21T12:00:00Z",
         "properties": {
-          "amount": -4.5,
+          "amount": "-4.50",
           "currency": "USD",
           "posted_at": "2026-08-20",
           "raw_description": "COFFEE SHOP"
@@ -31,7 +31,7 @@
     }
   },
   {
-    "name": "accepts a namespaced object extension",
+    "name": "accepts a top-level namespaced object extension",
     "schema": "media-object",
     "valid": true,
     "document": {
@@ -49,7 +49,7 @@
           "rnet://origin/018f1f4e-7b3a-7cc1-8b7a-123456789ad0"
         ],
         "properties": {
-          "amount": 1200,
+          "amount": "1200.00",
           "currency": "USD"
         }
       },
@@ -115,6 +115,37 @@
     }
   },
   {
+    "name": "accepts a user UUID writer namespace",
+    "schema": "media-object",
+    "valid": true,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789ac5",
+      "owner": "rnet://id/user-1",
+      "type": "note",
+      "elements": [],
+      "source": {
+        "ingest": {
+          "method": "authored",
+          "reproducible": false
+        },
+        "origins": [
+          "rnet://client/018f1f4e-7b3a-7cc1-8b7a-123456789ac0"
+        ],
+        "properties": {}
+      },
+      "inferred": {
+        "user/018f1f4e-7b3a-7cc1-8b7a-123456789abc:correction": {
+          "model": "user/direct",
+          "durable": true,
+          "properties": {
+            "category": "corrected"
+          }
+        }
+      }
+    }
+  },
+  {
     "name": "rejects an object without grounding",
     "schema": "media-object",
     "valid": false,
@@ -131,7 +162,7 @@
         },
         "origins": [],
         "properties": {
-          "amount": -1,
+          "amount": "-1.00",
           "currency": "USD"
         }
       }
@@ -231,7 +262,7 @@
           "rnet://origin/018f1f4e-7b3a-7cc1-8b7a-123456789ad0"
         ],
         "properties": {
-          "amount": -20,
+          "amount": "-20.00",
           "currency": "USD"
         }
       },
@@ -246,7 +277,7 @@
     "valid": false,
     "document": {
       "rnet_schema": "0.1",
-      "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789ac5",
+      "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789ac6",
       "owner": "rnet://id/user-1",
       "type": "transaction",
       "elements": [],
@@ -259,7 +290,7 @@
           "rnet://origin/018f1f4e-7b3a-7cc1-8b7a-123456789ad0"
         ],
         "properties": {
-          "amount": -20
+          "amount": "-20.00"
         }
       }
     }

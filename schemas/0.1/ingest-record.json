@@ -51,6 +51,9 @@
     {
       "description": "parser_hash is REQUIRED when an agent generated the parser.",
       "if": {
+        "required": [
+          "method"
+        ],
         "properties": {
           "method": {
             "const": "generated_parser"
@@ -71,6 +74,9 @@
     {
       "description": "Freehand agent extraction is never reproducible.",
       "if": {
+        "required": [
+          "method"
+        ],
         "properties": {
           "method": {
             "const": "agent"
