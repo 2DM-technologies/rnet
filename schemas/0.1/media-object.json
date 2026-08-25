@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rnet.network/schemas/0.1/media-object.json",
+  "title": "MediaObject",
+  "description": "The core unit of meaning: properties plus zero or more MediaElements, carrying three property blocks with different mutation rights. Fields are values, elements are files — if you would query on it, it is a field; if you would open it, it is an element. Pure meaning-objects legitimately carry zero elements.",
+  "type": "object",
+  "required": [
+    "rnet_schema",
+    "uri",
+    "owner",
+    "type",
+    "elements",
+    "source"
+  ],
+  "properties": {
+    "rnet_schema": {
+      "const": "0.1",
+      "description": "Protocol version this document conforms to."
+    },
+    "uri": {
+      "type": "string",
+      "description": "UUIDv7-identified record.",
+      "pattern": "^rnet://object/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "owner": {
+      "type": "string",
+      "description": "Immutable owner identity assigned by the store at creation. Ownership governs administration, not delegated access.",
+      "pattern": "^rnet://id/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "type": {
+      "type": "string",
+      "description": "Open vocabulary. The registered core vocabulary currently includes transaction and track; unregistered types such as post, photo, note, contact, event, book, article, and receipt remain legal.",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9_.-]*$"
+    },
+    "elements": {
+      "type": "array",
+      "description": "Ordered MediaElement URIs. MAY be empty.",
+      "items": {
+        "type": "string",
+        "pattern": "^rnet://element/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+      }
+    },
+    "keys": {
+      "type": "object",
+      "description": "External global identifiers for cross-service joins: isrc, isbn, fitid, url, ean, etc.",
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 512
+      }
+    },
+    "source": {
+      "type": "object",
+      "description": "Written by ingestion runtimes only. Immutable after ingest — re-ingestion creates a new revision, never edits in place.",
+      "required": [
+        "ingest",
+        "origins",
+        "properties"
+      ],
+      "properties": {
+        "ingest": {
+          "$ref": "https://rnet.network/schemas/0.1/ingest-record.json"
+        },
+        "origins": {
+          "type": "array",
+          "minItems": 1,
+          "description": "What this object was derived from — at least one, always. Either an origin artifact (rnet://origin/{uuid}) for ingested objects, or a client (rnet://client/{uuid}) for objects authored directly in an application. A filename string is not provenance.",
+          "items": {
+            "type": "string",
+            "pattern": "^rnet://(origin|client)/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        "retrieved_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "properties": {
+          "type": "object",
+          "description": "Facts the source format defines. Validated against the registered type vocabulary when one exists."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "type": "object",
+            "required": [
+              "ingest"
+            ],
+            "properties": {
+              "ingest": {
+                "type": "object",
+                "required": [
+                  "method"
+                ],
+                "properties": {
+                  "method": {
+                    "const": "authored"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "origins": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^rnet://client/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                }
+              }
+            }
+          },
+          "else": {
+            "type": "object",
+            "properties": {
+              "origins": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^rnet://origin/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "user": {
+      "type": "object",
+      "description": "Written by the owner via clients holding write:user. Freely mutable; revision-protected.",
+      "required": [
+        "properties"
+      ],
+      "properties": {
+        "properties": {
+          "type": "object"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    },
+    "inferred": {
+      "type": "object",
+      "description": "A map keyed by writer and task: every key is {writer}:{task}. Memory scoped to this record — some entries are task output recomputed from source, others accumulated from corrections and agent observation and cannot be re-derived. A re-run replaces only its own key, and never a durable entry. Consumers MUST treat entries as advisory.",
+      "propertyNames": {
+        "pattern": "^(?:[a-z][a-z0-9._-]*|user/[A-Za-z0-9._~-]+):[a-z][a-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "model",
+          "properties"
+        ],
+        "properties": {
+          "model": {
+            "type": "string",
+            "minLength": 1
+          },
+          "inferred_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "durable": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, a push task MUST NOT replace this entry. Durable entries hold understanding that accumulated rather than being computed from source — a user correction, a pattern an agent noticed across several objects. A task can never set this on its own output: durable means 'cannot be reproduced by re-running', and task output is by definition what re-running produces. Only agent runs and user-driven writes."
+          },
+          "properties": {
+            "type": "object"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "patternProperties": {
+    "^x-[a-z0-9-]+$": {
+      "description": "Namespaced extensions. Consumers MUST ignore namespaces they don't understand."
+    }
+  },
+  "additionalProperties": false
+}

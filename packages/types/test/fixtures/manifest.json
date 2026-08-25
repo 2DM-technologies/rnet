@@ -1,0 +1,423 @@
+[
+  {
+    "name": "accepts a zero-element transaction",
+    "schema": "media-object",
+    "valid": true,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abc",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "type": "transaction",
+      "elements": [],
+      "keys": {
+        "fitid": "bank-transaction-1"
+      },
+      "source": {
+        "ingest": {
+          "method": "parser",
+          "reproducible": true
+        },
+        "origins": [
+          "rnet://origin/018f1f4e-7b3a-7cc1-8b7a-123456789ad0"
+        ],
+        "retrieved_at": "2026-08-21T12:00:00Z",
+        "properties": {
+          "amount": "-4.50",
+          "currency": "USD",
+          "posted_at": "2026-08-20",
+          "raw_description": "COFFEE SHOP"
+        }
+      }
+    }
+  },
+  {
+    "name": "accepts a top-level namespaced object extension",
+    "schema": "media-object",
+    "valid": true,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abd",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "type": "transaction",
+      "elements": [],
+      "source": {
+        "ingest": {
+          "method": "parser",
+          "reproducible": true
+        },
+        "origins": [
+          "rnet://origin/018f1f4e-7b3a-7cc1-8b7a-123456789ad0"
+        ],
+        "properties": {
+          "amount": "1200.00",
+          "currency": "USD"
+        }
+      },
+      "x-plaid": {
+        "account_id": "synthetic-account"
+      }
+    }
+  },
+  {
+    "name": "accepts a Vibe with writer-keyed inference",
+    "schema": "vibe",
+    "valid": true,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://vibe/018f1f4e-7b3a-7cc1-8b7a-123456789abe",
+      "title": "Spending",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "objects": [
+        "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abc"
+      ],
+      "grants": [
+        {
+          "subject": "client:rbudget",
+          "scope": [
+            "read",
+            "write:user"
+          ]
+        }
+      ],
+      "inferred": {
+        "rhizome:summarize": {
+          "model": "openai/gpt-example",
+          "inferred_at": "2026-08-21T12:00:00Z",
+          "properties": {
+            "summary": "Synthetic fixture"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "accepts an authored object grounded in a UUIDv7 client",
+    "schema": "media-object",
+    "valid": true,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abf",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "type": "note",
+      "elements": [],
+      "source": {
+        "ingest": {
+          "method": "authored",
+          "reproducible": false
+        },
+        "origins": [
+          "rnet://client/018f1f4e-7b3a-7cc1-8b7a-123456789ac0"
+        ],
+        "properties": {
+          "title": "A thought"
+        }
+      }
+    }
+  },
+  {
+    "name": "accepts a user UUID writer namespace",
+    "schema": "media-object",
+    "valid": true,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789ac5",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "type": "note",
+      "elements": [],
+      "source": {
+        "ingest": {
+          "method": "authored",
+          "reproducible": false
+        },
+        "origins": [
+          "rnet://client/018f1f4e-7b3a-7cc1-8b7a-123456789ac0"
+        ],
+        "properties": {}
+      },
+      "inferred": {
+        "user/018f1f4e-7b3a-7cc1-8b7a-123456789abc:correction": {
+          "model": "user/direct",
+          "durable": true,
+          "properties": {
+            "category": "corrected"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "rejects an object without grounding",
+    "schema": "media-object",
+    "valid": false,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789ac1",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "type": "transaction",
+      "elements": [],
+      "source": {
+        "ingest": {
+          "method": "parser",
+          "reproducible": true
+        },
+        "origins": [],
+        "properties": {
+          "amount": "-1.00",
+          "currency": "USD"
+        }
+      }
+    }
+  },
+  {
+    "name": "rejects an unprefixed inferred key",
+    "schema": "media-object",
+    "valid": false,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789ac2",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "type": "note",
+      "elements": [],
+      "source": {
+        "ingest": {
+          "method": "authored",
+          "reproducible": false
+        },
+        "origins": [
+          "rnet://client/018f1f4e-7b3a-7cc1-8b7a-123456789ac0"
+        ],
+        "properties": {}
+      },
+      "inferred": {
+        "categorize": {
+          "model": "openai/gpt-example",
+          "properties": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "rejects inference without a model",
+    "schema": "media-object",
+    "valid": false,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789ac3",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "type": "note",
+      "elements": [],
+      "source": {
+        "ingest": {
+          "method": "authored",
+          "reproducible": false
+        },
+        "origins": [
+          "rnet://client/018f1f4e-7b3a-7cc1-8b7a-123456789ac0"
+        ],
+        "properties": {}
+      },
+      "inferred": {
+        "rhizome:categorize": {
+          "properties": {
+            "category": "other"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "rejects a generated parser without its hash",
+    "schema": "ingest-record",
+    "valid": false,
+    "document": {
+      "method": "generated_parser",
+      "reproducible": true
+    }
+  },
+  {
+    "name": "rejects a reproducible agent extraction",
+    "schema": "ingest-record",
+    "valid": false,
+    "document": {
+      "method": "agent",
+      "reproducible": true
+    }
+  },
+  {
+    "name": "rejects an unnamespaced core-object property",
+    "schema": "media-object",
+    "valid": false,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789ac4",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "type": "transaction",
+      "elements": [],
+      "source": {
+        "ingest": {
+          "method": "parser",
+          "reproducible": true
+        },
+        "origins": [
+          "rnet://origin/018f1f4e-7b3a-7cc1-8b7a-123456789ad0"
+        ],
+        "properties": {
+          "amount": "-20.00",
+          "currency": "USD"
+        }
+      },
+      "plaid": {
+        "account_id": "not-namespaced"
+      }
+    }
+  },
+  {
+    "name": "rejects a transaction missing registered vocabulary fields",
+    "schema": "media-object",
+    "valid": false,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789ac6",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "type": "transaction",
+      "elements": [],
+      "source": {
+        "ingest": {
+          "method": "parser",
+          "reproducible": true
+        },
+        "origins": [
+          "rnet://origin/018f1f4e-7b3a-7cc1-8b7a-123456789ad0"
+        ],
+        "properties": {
+          "amount": "-20.00"
+        }
+      }
+    }
+  },
+  {
+    "name": "rejects an invalid date-time format",
+    "schema": "origin-artifact",
+    "valid": false,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://origin/018f1f4e-7b3a-7cc1-8b7a-123456789ad0",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "mime": "application/json",
+      "bytes": "https://blob.example/origin",
+      "uploaded_at": "definitely-not-a-date"
+    }
+  },
+  {
+    "name": "rejects a UUIDv4 object URI",
+    "schema": "media-object",
+    "valid": false,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://object/550e8400-e29b-41d4-a716-446655440000",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "type": "note",
+      "elements": [],
+      "source": {
+        "ingest": {
+          "method": "authored",
+          "reproducible": false
+        },
+        "origins": [
+          "rnet://client/018f1f4e-7b3a-7cc1-8b7a-123456789ac0"
+        ],
+        "properties": {}
+      }
+    }
+  },
+  {
+    "name": "accepts a UUID element with a content-addressed payload",
+    "schema": "media-element",
+    "valid": true,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://element/018f1f4e-7b3a-7cc1-8b7a-123456789ad1",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "kind": "text",
+      "mime": "text/plain",
+      "bytes": "https://blob.example/element"
+    }
+  },
+  {
+    "name": "accepts an owned UUID origin with a content-addressed payload",
+    "schema": "origin-artifact",
+    "valid": true,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://origin/018f1f4e-7b3a-7cc1-8b7a-123456789ad0",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "mime": "application/json",
+      "bytes": "https://blob.example/origin"
+    }
+  },
+  {
+    "name": "rejects a hash-addressed element record",
+    "schema": "media-element",
+    "valid": false,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://element/sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "kind": "text",
+      "mime": "text/plain",
+      "bytes": "https://blob.example/element"
+    }
+  },
+  {
+    "name": "rejects an object without an owner",
+    "schema": "media-object",
+    "valid": false,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789ad2",
+      "type": "note",
+      "elements": [],
+      "source": {
+        "ingest": {
+          "method": "authored",
+          "reproducible": false
+        },
+        "origins": [
+          "rnet://client/018f1f4e-7b3a-7cc1-8b7a-123456789ac0"
+        ],
+        "properties": {}
+      }
+    }
+  },
+  {
+    "name": "accepts duplicate object placements in a Vibe",
+    "schema": "vibe",
+    "valid": true,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://vibe/018f1f4e-7b3a-7cc1-8b7a-123456789ad3",
+      "title": "Duplicate membership",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "objects": [
+        "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abc",
+        "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abc"
+      ]
+    }
+  },
+  {
+    "name": "rejects a grant with an unknown scope",
+    "schema": "grant",
+    "valid": false,
+    "document": {
+      "subject": "client:rbudget",
+      "scope": [
+        "read",
+        "admin"
+      ]
+    }
+  }
+]

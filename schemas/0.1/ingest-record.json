@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rnet.network/schemas/0.1/ingest-record.json",
+  "title": "IngestRecord",
+  "description": "How an object came to be — the determinism disclosure. Consumers MAY gate on this record; the protocol guarantees the disclosure, not the trustworthiness.",
+  "type": "object",
+  "required": [
+    "method",
+    "reproducible"
+  ],
+  "properties": {
+    "method": {
+      "description": "How this object was produced, named for what did the work. parser: a committed, versioned parser ran. generated_parser: an agent wrote a one-off parser, which ran — parser_hash pins it. agent: an agent extracted directly, writing no parser. authored: a person created the object in a client; nothing was parsed. Determinism runs parser > generated_parser > agent — generated code is hash-pinned and re-runnable, while freehand extraction is not. authored sits outside the ladder: nothing was derived.",
+      "enum": [
+        "parser",
+        "generated_parser",
+        "agent",
+        "authored"
+      ]
+    },
+    "skill": {
+      "description": "Skill identity + semver, when a corpus skill guided the run.",
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-z0-9][a-z0-9._-]*@\\d+\\.\\d+\\.\\d+([-+][0-9A-Za-z.-]+)?$"
+    },
+    "model": {
+      "description": "Model identity, when a model participated in parsing.",
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "parser_hash": {
+      "description": "Content hash of generated parser code. Regeneration is a new parser, new provenance.",
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "reproducible": {
+      "description": "Whether re-running the same method against source.origins yields identical output (modulo timestamps).",
+      "type": "boolean"
+    }
+  },
+  "allOf": [
+    {
+      "description": "parser_hash is REQUIRED when an agent generated the parser.",
+      "if": {
+        "required": [
+          "method"
+        ],
+        "properties": {
+          "method": {
+            "const": "generated_parser"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "parser_hash"
+        ],
+        "properties": {
+          "parser_hash": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "description": "Freehand agent extraction is never reproducible.",
+      "if": {
+        "required": [
+          "method"
+        ],
+        "properties": {
+          "method": {
+            "const": "agent"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "reproducible": {
+            "const": false
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

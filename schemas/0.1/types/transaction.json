@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rnet.network/schemas/0.1/types/transaction.json",
+  "title": "transaction — source.properties vocabulary",
+  "description": "Registered core type. Validates source.properties for objects with type \"transaction\". Typically zero elements (fields are facts); authored attachments — memos, receipts — are the element case. Recommended keys: fitid (OFX transaction id), account_hash.",
+  "type": "object",
+  "required": [
+    "amount",
+    "currency"
+  ],
+  "properties": {
+    "amount": {
+      "type": "string",
+      "description": "Signed base-10 decimal string. Negative = outflow, positive = inflow, per OFX convention. Strings preserve exact monetary precision across implementations.",
+      "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?$"
+    },
+    "currency": {
+      "type": "string",
+      "description": "ISO 4217 alpha code.",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "posted_at": {
+      "type": "string",
+      "description": "Date the transaction posted.",
+      "format": "date"
+    },
+    "raw_description": {
+      "type": "string",
+      "description": "The descriptor string as the source format carries it — a fact about the transaction, not authored content.",
+      "maxLength": 1024
+    }
+  },
+  "additionalProperties": true,
+  "$comment": "additionalProperties stays open: source formats carry fields beyond the core vocabulary (check numbers, MCC codes, pending flags). The vocabulary defines the floor, not the ceiling."
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rnet.network/schemas/0.1/types/track.json",
+  "title": "track — source.properties vocabulary",
+  "description": "Registered core type. Validates source.properties for objects with type \"track\". Normally a ZERO-element object: audio lives inside a streaming platform, so it is referenced through the object's keys (isrc as the cross-service join key; spotify_uri, apple_music_id, etc. as handoff locators) rather than modelled as an element. Identity and meaning live here in properties — title, artist, and album are fields because they are queried on. Album art, if stored, is an image element.",
+  "type": "object",
+  "required": [
+    "title"
+  ],
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "artist": {
+      "type": "string",
+      "maxLength": 512
+    },
+    "album": {
+      "type": "string",
+      "maxLength": 512
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "released": {
+      "type": "string",
+      "description": "Release date, as precise as the source knows it: YYYY, YYYY-MM, or YYYY-MM-DD.",
+      "pattern": "^\\d{4}(-\\d{2}(-\\d{2})?)?$"
+    }
+  },
+  "additionalProperties": true,
+  "$comment": "Streaming exports carry service-specific fields (play counts, added_at, playlist position). Service-specific data belongs in x-{service} extensions on the object; genuinely track-intrinsic extras may ride here."
+}

@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rnet.network/schemas/0.1/vibe.json",
+  "title": "Vibe",
+  "description": "A dynamic, owned collection of MediaObjects, plus the state that makes it living: its pull configuration and its inferred block. Vibes contain object references, not copies. Vibes carry no source block — they are authored, not ingested; the omission is the ontology.",
+  "type": "object",
+  "required": [
+    "rnet_schema",
+    "uri",
+    "title",
+    "owner",
+    "objects"
+  ],
+  "properties": {
+    "rnet_schema": {
+      "description": "Protocol version this document conforms to. Required, present from commit one.",
+      "const": "0.1"
+    },
+    "uri": {
+      "type": "string",
+      "pattern": "^rnet://vibe/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "owner": {
+      "type": "string",
+      "description": "A stable rnet://id/{uuidv7} identity URI. Identity issuance and authentication are implementation-defined.",
+      "pattern": "^rnet://id/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "objects": {
+      "type": "array",
+      "description": "Ordered MediaObject URIs — references, not copies. A URI may appear more than once; each occurrence is a distinct placement. Stores preserve this order, including duplicates, across paginated reads.",
+      "items": {
+        "type": "string",
+        "pattern": "^rnet://object/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "pull": {
+      "type": "object",
+      "description": "How the Vibe acquires new objects.",
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "sources": {
+          "type": "array",
+          "description": "Source identifiers, implementation-scoped (e.g. \"skill:ofx@^0.3\").",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "policy": {
+          "enum": [
+            "append_new",
+            "replace",
+            "suggest_only"
+          ]
+        },
+        "last_pulled_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    },
+    "grants": {
+      "type": "array",
+      "items": {
+        "$ref": "https://rnet.network/schemas/0.1/grant.json"
+      }
+    },
+    "inferred": {
+      "type": "object",
+      "description": "A map keyed by writer and task: every key is {writer}:{task}. Memory scoped to this record — some entries are task output recomputed from source, others accumulated from corrections and agent observation and cannot be re-derived. A re-run replaces only its own key, and never a durable entry. Consumers MUST treat entries as advisory. The store's summarize task conventionally writes summary and tags.",
+      "propertyNames": {
+        "pattern": "^(?:[a-z][a-z0-9._-]*|user/[A-Za-z0-9._~-]+):[a-z][a-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "model",
+          "properties"
+        ],
+        "properties": {
+          "model": {
+            "type": "string",
+            "minLength": 1
+          },
+          "inferred_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "durable": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, a push task MUST NOT replace this entry. Durable entries hold understanding that accumulated rather than being computed from source — a user correction, a pattern an agent noticed across several objects — and re-running a task cannot reproduce them. Only agent runs and user-driven writes may set this; a task may never mark its own output durable, or refresh stops working."
+          },
+          "properties": {
+            "type": "object"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "patternProperties": {
+    "^x-[a-z0-9-]+$": {
+      "description": "Namespaced extensions. Consumers MUST ignore namespaces they don't understand."
+    }
+  },
+  "additionalProperties": false
+}

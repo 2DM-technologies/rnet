@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rnet.network/schemas/0.1/origin-artifact.json",
+  "title": "OriginArtifact",
+  "description": "An immutable, UUIDv7-identified provenance record around a content-addressed payload. Ontologically inert: not media, has no kind, never appears in a Vibe's objects, never consumed by a model as content. Exists purely as ground truth so ingestion can always be re-run against original bytes.",
+  "type": "object",
+  "required": [
+    "rnet_schema",
+    "uri",
+    "owner",
+    "content_hash",
+    "mime",
+    "bytes"
+  ],
+  "properties": {
+    "rnet_schema": {
+      "const": "0.1",
+      "description": "Protocol version this origin record was written under."
+    },
+    "uri": {
+      "type": "string",
+      "description": "Immutable UUIDv7 provenance-record identity, independent of payload identity.",
+      "pattern": "^rnet://origin/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "owner": {
+      "type": "string",
+      "description": "Immutable owner identity assigned by the store at creation.",
+      "pattern": "^rnet://id/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "content_hash": {
+      "type": "string",
+      "description": "SHA-256 identity of the payload bytes; not record identity or authority.",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "mime": {
+      "type": "string",
+      "pattern": "^[a-z]+/[a-zA-Z0-9][a-zA-Z0-9!#$&^_.+-]*$"
+    },
+    "bytes": {
+      "type": "string",
+      "description": "Retrievable payload location. Returned bytes must hash to content_hash.",
+      "format": "uri"
+    },
+    "byte_size": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "label": {
+      "type": "string",
+      "description": "Human-readable name, e.g. the original filename.",
+      "maxLength": 512
+    },
+    "uploaded_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "patternProperties": {
+    "^x-[a-z0-9-]+$": {
+      "description": "Namespaced extensions."
+    }
+  },
+  "additionalProperties": false
+}
