@@ -20,7 +20,7 @@ Everything else is product, not protocol:
 | Store semantics — identity, creation, access, push, pull | **Protocol** (§4) |
 | How ingestion is implemented (skills, agents, parsers) | Implementation (reference: Rhizome ingestion runtime) |
 | How machines (client applications) are built, registered, sandboxed, metered, billed | Implementation (reference: Rhizome dMachine SDK) |
-| Identity issuance and authentication | Implementation (identity URIs are opaque; see §8) |
+| Identity issuance and authentication | Implementation (identity URI bodies are UUIDv7; see §8) |
 
 **The test for protocol membership:** would two independent store implementations that disagreed produce documents or behaviours with incompatible meaning? Machine manifests fail that test — a client built against one store's SDK simply doesn't run on another, which is a product gap, not a protocol breach. Copying a Vibe fails it too: it is Vibe creation plus adding object references, so no store needs to agree on a "fork" operation. Scope semantics pass it — a store that let a `write:user` grant touch `source` blocks would corrupt every client's trust model.
 
@@ -81,7 +81,7 @@ Objects whose meaning is entirely factual carry **zero elements** — the pure m
 | `rnet_schema` | string | ✓ | Protocol version this record was written under. |
 | `kind` | enum | ✓ | One of the five above. |
 | `uri` | string (URI) | ✓ | `rnet://element/{uuid}` — a UUIDv7 identifying this immutable element record. |
-| `owner` | string (URI) | ✓ | Immutable `rnet://id/{opaque}` identity assigned by the store at creation. |
+| `owner` | string (URI) | ✓ | Immutable `rnet://id/{uuidv7}` identity assigned by the store at creation. |
 | `content_hash` | string | ✓ | SHA-256 of the payload, formatted `sha256:{hash}`. This identifies bytes, not the element record. |
 | `mime` | string | ✓ | IANA media type. `mime` is truth; `kind` is the consumption hint. |
 | `bytes` | string (URL) | ✓ | Retrievable payload location. The returned bytes MUST hash to `content_hash`. |
@@ -114,7 +114,7 @@ The provenance namespace. An origin artifact is an immutable, UUID-identified re
 |---|---|---|
 | `rnet_schema` | ✓ | Protocol version this record was written under. |
 | `uri` | ✓ | `rnet://origin/{uuid}` — a UUIDv7 identifying this immutable provenance record. |
-| `owner` | ✓ | Immutable `rnet://id/{opaque}` identity assigned by the store at creation. |
+| `owner` | ✓ | Immutable `rnet://id/{uuidv7}` identity assigned by the store at creation. |
 | `content_hash` | ✓ | SHA-256 of the payload, formatted `sha256:{hash}`. This identifies bytes, not the origin record. |
 | `mime` | ✓ | |
 | `bytes` | ✓ | Retrievable payload location. The returned bytes MUST hash to `content_hash`. |
@@ -230,7 +230,7 @@ Skill and parser identifiers are meaningful within the store that produced them;
 |---|---|
 | `rnet_schema` | Protocol version this document was written under. Required on every stored document — origins, elements, objects, and Vibes alike — so each is self-describing and a future migration can run incrementally. Documents carry **no `$schema` field**: a validator is pointed at a schema by the application through a registry keyed on `$id`, and storing a hosting URL alongside a version pin would duplicate the same fact in two forms that can disagree. |
 | `uri` | `rnet://object/{uuid}` — a store-minted UUIDv7. Objects, elements, and origins have record identity independent of any payload hash; objects may mutate under revision control, while element and origin records are immutable. Clients do not choose record identifiers. |
-| `owner` | Immutable `rnet://id/{opaque}` identity assigned by the store at creation. Ownership governs administration, not delegated access. |
+| `owner` | Immutable `rnet://id/{uuidv7}` identity assigned by the store at creation. Ownership governs administration, not delegated access. |
 | `type` | Open vocabulary with registered core types (§7). Unregistered types are legal. |
 | `elements` | Ordered list of MediaElement URIs. MAY be empty. |
 | `keys` | External global identifiers for cross-service joins: `isrc`, `isbn`, `fitid`, `url`, `ean`, etc. |
@@ -277,7 +277,7 @@ A dynamic, owned collection of MediaObjects, plus the state that makes it living
 | Field | Notes |
 |---|---|
 | `rnet_schema` | Protocol version this document conforms to. Required. |
-| `owner` | An `rnet://id/` URI. Identity issuance is out of protocol (§8); the URI shape is stable. |
+| `owner` | An `rnet://id/{uuidv7}` URI. Identity issuance and authentication are implementation-defined (§8). |
 | `objects` | Ordered list of MediaObject URIs. A URI MAY appear more than once; each occurrence is a distinct placement. Stores MUST preserve this order, including repeated references, across paginated reads. |
 | `inferred` | The Vibe-level inferred block — same task-keyed shape and rules as an object's (§2.3). Vibes carry no `source` block: they are authored, not ingested. The store's `summarize` task conventionally writes `summary` (the compact context pushed to models instead of the full object list) and `tags`. Derived indexes — embeddings, search structures — are built *from* Vibes by the store, never carried *in* them. |
 | `pull` | How the Vibe acquires new objects: which sources feed it, on what policy (`append_new`, `replace`, `suggest_only`). |
@@ -293,11 +293,11 @@ What access control MUST mean in any store. A store that implements these semant
 
 ### 3.1 Grants
 
-A grant is `{subject, scope[]}` attached to a Vibe. Subjects are opaque strings with a namespace prefix:
+A grant is `{subject, scope[]}` attached to a Vibe. Subjects use one of these namespaced forms:
 
 | Subject form | Meaning |
 |---|---|
-| `id:{rnet-id}` | A user identity |
+| `id:rnet://id/{uuidv7}` | A user identity |
 | `client:{name}` | An external application identity, registered with the store (registration mechanics are implementation-defined) |
 | `public` | Anyone, including unauthenticated readers |
 | `{x-namespace}:{...}` | Extension subject types (e.g., a store MAY resolve token- or credential-based subjects). Stores MUST deny grants whose subject namespace they do not understand. |
@@ -377,7 +377,7 @@ Naming the missing scope and the failing rule is the part that matters: a caller
 ## 5. Identity
 
 - **Protocol records:** elements, origins, objects, and Vibes use UUIDv7 record URIs in their respective namespaces: `rnet://element/{uuid}`, `rnet://origin/{uuid}`, `rnet://object/{uuid}`, and `rnet://vibe/{uuid}`. A payload's `content_hash` is integrity and deduplication metadata, never record identity or authority.
-- **Users:** `rnet://id/{opaque}` — issuance and authentication are implementation-defined (§8 punt). The identifier is opaque and stable: stores MUST NOT mint identity URIs from mutable, human-chosen strings. Display names, handles, and usernames are store features that travel *alongside* an identity, never *as* one — otherwise a rename silently repoints every grant and owner reference that quoted the old URI. The shape is chosen so decentralized identity mappings (DID methods, key-derived identities, account-abstraction schemes) can be added later as resolution methods without breaking any stored reference.
+- **Users:** `rnet://id/{uuidv7}` — the identity body is a canonical UUIDv7. Issuance and authentication remain implementation-defined (§8 punt). Display names, handles, and usernames travel *alongside* an identity, never *as* one, so a rename cannot repoint owner or grant references.
 - **Clients:** applications acting on a user's behalf — `client:{name}` as a grant subject, `rnet://client/{uuid}` as the stable URI an authored object's `source.origins` points at (§2.3). Registration mechanics, manifests, sandboxing, and metering are implementation concerns; the protocol defines only the two identifier shapes, so a store whose clients are plugins or extensions rather than any particular product's notion of an app remains interoperable. Registration mechanics, manifests, budgets, and billing are implementation concerns (see: Rhizome dMachine SDK).
 - **Ingestion sources:** recorded in `source.ingest` for attribution (§2.3). Provenance is attribution.
 
@@ -418,7 +418,7 @@ Initial property vocabularies (full JSON Schemas at `/schemas/0.1/types/`):
 
 Recorded so the punts are decisions, not oversights:
 
-1. **Decentralized identity.** Identity URIs are opaque, so DID methods and account-abstraction schemes can be layered on later as resolution methods; neither their syntax nor their trust model is specified here. One reference store first.
+1. **Decentralized identity.** User identity URI bodies are UUIDv7, but how they are issued, authenticated, or resolved is not specified. One reference store first.
 2. **End-to-end encryption of elements.** At-rest and in-flight encryption are implementation duties; E2EE pods are a 0.x milestone, not 0.1.
 3. **Inter-store federation.** The wire protocol between stores isn't specified. Federation waits for a second implementer.
 4. **A query language.** `selection` filters are deliberately primitive. No SPARQL. If a real need emerges, it will be JSON-native.

@@ -7,10 +7,12 @@
  * against those schemas in `test/patterns.test.ts` — the JSON stays the source of
  * truth, and this constant cannot drift from it without a test failing.
  *
- * `rnet://id/{opaque}` is deliberately not covered: identity issuance is out of
- * protocol, so an owner URI is an opaque string rather than a UUID.
+ * User identity URIs and protocol record URIs both use canonical UUIDv7 bodies.
  */
 export const UUIDV7 = "[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}";
+
+/** A canonical user identity URI. */
+export const RNET_ID_URI_PATTERN = `^rnet://id/${UUIDV7}$`;
 
 /** A bare UUIDv7, anchored — for a path segment or an identifier field. */
 export const UUIDV7_PATTERN = `^${UUIDV7}$`;

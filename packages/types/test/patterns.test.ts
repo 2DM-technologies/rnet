@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { rnetSchemas } from "../src/generated/schemas.ts";
 import {
   RNET_RECORD_KINDS,
+  RNET_ID_URI_PATTERN,
   UUIDV7,
   rnetUriPattern,
   type RnetRecordKind,
@@ -28,53 +29,49 @@ function collectPatterns(node: unknown, found: string[] = []): string[] {
 const schemaPatterns = [
   ...new Set(rnetSchemas.flatMap((schema) => collectPatterns(schema))),
 ];
-const uuidBearing = schemaPatterns.filter((pattern) =>
-  pattern.includes(UUIDV7),
+const uuidUriPatterns = schemaPatterns.filter(
+  (pattern) => pattern.startsWith("^rnet://") && pattern.includes(UUIDV7),
 );
 
 describe("record identity patterns", () => {
-  test("every UUID-bearing schema pattern is reproducible from rnetUriPattern", () => {
-    const reproducible = new Set<string>();
+  test("every UUIDv7 URI schema pattern is reproducible from the exported patterns", () => {
+    const reproducible = new Set<string>([RNET_ID_URI_PATTERN]);
     for (const kind of RNET_RECORD_KINDS)
       reproducible.add(rnetUriPattern(kind));
     // source.origins accepts either an artifact or the client that authored the object.
     reproducible.add(rnetUriPattern("origin", "client"));
 
-    for (const pattern of uuidBearing) {
+    for (const pattern of uuidUriPatterns) {
       expect(reproducible).toContain(pattern);
     }
   });
 
   test("the canonical schemas actually carry UUIDv7 URIs", () => {
     // Guards the test above from passing vacuously if UUIDV7 ever stops matching.
-    expect(uuidBearing.length).toBeGreaterThanOrEqual(5);
+    expect(uuidUriPatterns.length).toBeGreaterThanOrEqual(6);
     for (const kind of [
       "element",
       "object",
       "origin",
       "vibe",
     ] as RnetRecordKind[]) {
-      expect(uuidBearing).toContain(rnetUriPattern(kind));
+      expect(uuidUriPatterns).toContain(rnetUriPattern(kind));
     }
   });
 
-  test("owner URIs permit a UUID without requiring one", () => {
+  test("owner URIs require a canonical UUIDv7", () => {
     const owner = schemaPatterns.find((pattern) =>
       pattern.startsWith("^rnet://id/"),
     );
     expect(owner).toBeDefined();
     const ownerPattern = new RegExp(owner!);
 
-    // Rhizome mints UUID owners, so the shape has to be accepted.
     expect(
       ownerPattern.test("rnet://id/018f1f4e-7b3a-7cc1-8b7a-123456789abc"),
     ).toBe(true);
-
-    // But the protocol must not mandate it: identity issuance is out of protocol
-    // (spec §5), so requiring a UUIDv7 here would make one store's choice binding
-    // on every other implementation.
-    expect(owner).not.toContain(UUIDV7);
-    expect(ownerPattern.test("rnet://id/noah")).toBe(true);
+    expect(owner).toBe(RNET_ID_URI_PATTERN);
+    expect(ownerPattern.test("rnet://id/noah")).toBe(false);
+    expect(ownerPattern.test("rnet://id/018f1f4e-7b3a-4cc1-8b7a-123456789abc")).toBe(false);
   });
 
   test("rnetUriPattern matches real URIs and rejects UUIDv4", () => {

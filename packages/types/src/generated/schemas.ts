@@ -13,8 +13,8 @@ export const grantSchema = {
   "properties": {
     "subject": {
       "type": "string",
-      "description": "Opaque string with a namespace prefix: id:{rnet-id} (a user), client:{name} (a registered application), public (anyone), or {x-namespace}:{...} (extension subject types).",
-      "pattern": "^(id:rnet://id/[A-Za-z0-9._~-]+|client:[a-z0-9][a-z0-9._-]*|public|x-[a-z0-9-]+:.+)$"
+      "description": "Namespaced subject: id:rnet://id/{uuidv7} (a user), client:{name} (a registered application), public (anyone), or {x-namespace}:{...} (extension subject types).",
+      "pattern": "^(id:rnet://id/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|client:[a-z0-9][a-z0-9._-]*|public|x-[a-z0-9-]+:.+)$"
     },
     "scope": {
       "type": "array",
@@ -171,7 +171,7 @@ export const mediaElementSchema = {
     "owner": {
       "type": "string",
       "description": "Immutable owner identity assigned by the store at creation.",
-      "pattern": "^rnet://id/[A-Za-z0-9._~-]+$"
+      "pattern": "^rnet://id/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
     },
     "content_hash": {
       "type": "string",
@@ -232,7 +232,7 @@ export const mediaObjectSchema = {
     "owner": {
       "type": "string",
       "description": "Immutable owner identity assigned by the store at creation. Ownership governs administration, not delegated access.",
-      "pattern": "^rnet://id/[A-Za-z0-9._~-]+$"
+      "pattern": "^rnet://id/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
     },
     "type": {
       "type": "string",
@@ -380,7 +380,7 @@ export const originArtifactSchema = {
     "owner": {
       "type": "string",
       "description": "Immutable owner identity assigned by the store at creation.",
-      "pattern": "^rnet://id/[A-Za-z0-9._~-]+$"
+      "pattern": "^rnet://id/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
     },
     "content_hash": {
       "type": "string",
@@ -520,8 +520,8 @@ export const vibeSchema = {
     },
     "owner": {
       "type": "string",
-      "description": "An rnet://id/ URI. Identity issuance is out of protocol; the identifier is opaque and stable.",
-      "pattern": "^rnet://id/[A-Za-z0-9._~-]+$"
+      "description": "A stable rnet://id/{uuidv7} identity URI. Identity issuance and authentication are implementation-defined.",
+      "pattern": "^rnet://id/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
     },
     "objects": {
       "type": "array",

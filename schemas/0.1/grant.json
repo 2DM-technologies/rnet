@@ -11,8 +11,8 @@
   "properties": {
     "subject": {
       "type": "string",
-      "description": "Opaque string with a namespace prefix: id:{rnet-id} (a user), client:{name} (a registered application), public (anyone), or {x-namespace}:{...} (extension subject types).",
-      "pattern": "^(id:rnet://id/[A-Za-z0-9._~-]+|client:[a-z0-9][a-z0-9._-]*|public|x-[a-z0-9-]+:.+)$"
+      "description": "Namespaced subject: id:rnet://id/{uuidv7} (a user), client:{name} (a registered application), public (anyone), or {x-namespace}:{...} (extension subject types).",
+      "pattern": "^(id:rnet://id/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|client:[a-z0-9][a-z0-9._-]*|public|x-[a-z0-9-]+:.+)$"
     },
     "scope": {
       "type": "array",

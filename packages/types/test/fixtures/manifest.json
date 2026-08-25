@@ -6,7 +6,7 @@
     "document": {
       "rnet_schema": "0.1",
       "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abc",
-      "owner": "rnet://id/user-1",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
       "type": "transaction",
       "elements": [],
       "keys": {
@@ -37,7 +37,7 @@
     "document": {
       "rnet_schema": "0.1",
       "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abd",
-      "owner": "rnet://id/user-1",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
       "type": "transaction",
       "elements": [],
       "source": {
@@ -66,7 +66,7 @@
       "rnet_schema": "0.1",
       "uri": "rnet://vibe/018f1f4e-7b3a-7cc1-8b7a-123456789abe",
       "title": "Spending",
-      "owner": "rnet://id/user-1",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
       "objects": [
         "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abc"
       ],
@@ -97,7 +97,7 @@
     "document": {
       "rnet_schema": "0.1",
       "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abf",
-      "owner": "rnet://id/user-1",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
       "type": "note",
       "elements": [],
       "source": {
@@ -121,7 +121,7 @@
     "document": {
       "rnet_schema": "0.1",
       "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789ac5",
-      "owner": "rnet://id/user-1",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
       "type": "note",
       "elements": [],
       "source": {
@@ -152,7 +152,7 @@
     "document": {
       "rnet_schema": "0.1",
       "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789ac1",
-      "owner": "rnet://id/user-1",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
       "type": "transaction",
       "elements": [],
       "source": {
@@ -175,7 +175,7 @@
     "document": {
       "rnet_schema": "0.1",
       "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789ac2",
-      "owner": "rnet://id/user-1",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
       "type": "note",
       "elements": [],
       "source": {
@@ -203,7 +203,7 @@
     "document": {
       "rnet_schema": "0.1",
       "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789ac3",
-      "owner": "rnet://id/user-1",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
       "type": "note",
       "elements": [],
       "source": {
@@ -250,7 +250,7 @@
     "document": {
       "rnet_schema": "0.1",
       "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789ac4",
-      "owner": "rnet://id/user-1",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
       "type": "transaction",
       "elements": [],
       "source": {
@@ -278,7 +278,7 @@
     "document": {
       "rnet_schema": "0.1",
       "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789ac6",
-      "owner": "rnet://id/user-1",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
       "type": "transaction",
       "elements": [],
       "source": {
@@ -302,7 +302,7 @@
     "document": {
       "rnet_schema": "0.1",
       "uri": "rnet://origin/018f1f4e-7b3a-7cc1-8b7a-123456789ad0",
-      "owner": "rnet://id/user-1",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
       "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "mime": "application/json",
       "bytes": "https://blob.example/origin",
@@ -316,7 +316,7 @@
     "document": {
       "rnet_schema": "0.1",
       "uri": "rnet://object/550e8400-e29b-41d4-a716-446655440000",
-      "owner": "rnet://id/user-1",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
       "type": "note",
       "elements": [],
       "source": {
@@ -338,7 +338,7 @@
     "document": {
       "rnet_schema": "0.1",
       "uri": "rnet://element/018f1f4e-7b3a-7cc1-8b7a-123456789ad1",
-      "owner": "rnet://id/user-1",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
       "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "kind": "text",
       "mime": "text/plain",
@@ -352,7 +352,7 @@
     "document": {
       "rnet_schema": "0.1",
       "uri": "rnet://origin/018f1f4e-7b3a-7cc1-8b7a-123456789ad0",
-      "owner": "rnet://id/user-1",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
       "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "mime": "application/json",
       "bytes": "https://blob.example/origin"
@@ -365,7 +365,7 @@
     "document": {
       "rnet_schema": "0.1",
       "uri": "rnet://element/sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "owner": "rnet://id/user-1",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
       "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "kind": "text",
       "mime": "text/plain",
@@ -401,7 +401,7 @@
       "rnet_schema": "0.1",
       "uri": "rnet://vibe/018f1f4e-7b3a-7cc1-8b7a-123456789ad3",
       "title": "Duplicate membership",
-      "owner": "rnet://id/user-1",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
       "objects": [
         "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abc",
         "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abc"

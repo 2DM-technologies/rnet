@@ -10,7 +10,7 @@ import {
 const uuid = "018f1f4e-7b3a-7cc1-8b7a-123456789abc";
 const originUuid = "018f1f4e-7b3a-7cc1-8b7a-123456789abd";
 const hash = `sha256:${"a".repeat(64)}`;
-const owner = "rnet://id/user-1";
+const owner = "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d";
 
 describe("canonical schema behavior", () => {
   test("enforces generated parser provenance", () => {
@@ -82,5 +82,25 @@ describe("canonical schema behavior", () => {
     expect(validateSchema("media-element", element).ok).toBe(true);
     expect(validateSchema("media-element", { ...element, uri: `rnet://element/${hash}` }).ok).toBe(false);
     expect(validateSchema("media-element", { ...element, owner: undefined }).ok).toBe(false);
+  });
+
+  test("requires UUIDv7 user identities in owners and grant subjects", () => {
+    expect(validateSchema("media-element", {
+      rnet_schema: RNET_SCHEMA_VERSION,
+      uri: `rnet://element/${uuid}`,
+      owner: "rnet://id/alice",
+      content_hash: hash,
+      kind: "text",
+      mime: "text/plain",
+      bytes: "https://blob.example/element",
+    }).ok).toBe(false);
+    expect(validateSchema("grant", { subject: `id:${owner}`, scope: ["read"] }).ok).toBe(true);
+    expect(validateSchema("grant", { subject: "id:rnet://id/alice", scope: ["read"] }).ok).toBe(
+      false,
+    );
+    expect(validateSchema("grant", {
+      subject: "id:rnet://id/018f1f4e-7b3a-4cc1-8b7a-123456789abc",
+      scope: ["read"],
+    }).ok).toBe(false);
   });
 });
