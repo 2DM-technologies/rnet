@@ -1,9 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import { rnetSchemas } from "../src/generated/schemas.ts";
+import { mediaObjectSchema, rnetSchemas } from "../src/generated/schemas.ts";
 import {
   RNET_RECORD_KINDS,
   RNET_ID_URI_PATTERN,
+  TASK,
+  TASK_PATTERN,
   UUIDV7,
   rnetUriPattern,
   type RnetRecordKind,
@@ -95,5 +97,15 @@ describe("record identity patterns", () => {
 
   test("rnetUriPattern rejects an empty kind list", () => {
     expect(() => rnetUriPattern()).toThrow();
+  });
+
+  test("task names are bare lowercase identifiers", () => {
+    const taskPattern = new RegExp(TASK_PATTERN);
+    expect(taskPattern.test("categorize_transactions")).toBe(true);
+    expect(taskPattern.test("bad task")).toBe(false);
+    expect(taskPattern.test("rhizome:categorize")).toBe(false);
+    expect(mediaObjectSchema.properties.inferred.propertyNames.pattern.endsWith(`:${TASK}$`)).toBe(
+      true,
+    );
   });
 });

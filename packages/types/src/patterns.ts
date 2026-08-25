@@ -17,6 +17,10 @@ export const RNET_ID_URI_PATTERN = `^rnet://id/${UUIDV7}$`;
 /** A bare UUIDv7, anchored — for a path segment or an identifier field. */
 export const UUIDV7_PATTERN = `^${UUIDV7}$`;
 
+/** A bare task name supplied before the store adds its authenticated writer prefix. */
+export const TASK = "[a-z][a-z0-9_]*";
+export const TASK_PATTERN = `^${TASK}$`;
+
 /** Record kinds whose URIs carry a store-minted UUIDv7. */
 export const RNET_RECORD_KINDS = ["client", "element", "object", "origin", "vibe"] as const;
 

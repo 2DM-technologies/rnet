@@ -212,6 +212,8 @@ When elements *do* attach to a transaction, they are files: an emailed receipt (
 | `ingest` | ✓ | How the object was produced — the determinism disclosure, below. |
 | `retrieved_at` | — | |
 
+Provenance method and origin namespace are correlated: `authored` objects MUST name only `rnet://client/{uuid}` origins, while `parser`, `generated_parser`, and `agent` objects MUST name only `rnet://origin/{uuid}` artifacts. A method/origin mismatch is non-conformant rather than an alternate spelling of the same provenance.
+
 The `ingest` record declares provenance so consumers can price trust; the protocol guarantees the disclosure, not the trustworthiness:
 
 | Field | Req | Notes |

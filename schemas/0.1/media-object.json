@@ -80,6 +80,53 @@
           "description": "Facts the source format defines. Validated against the registered type vocabulary when one exists."
         }
       },
+      "allOf": [
+        {
+          "if": {
+            "type": "object",
+            "required": [
+              "ingest"
+            ],
+            "properties": {
+              "ingest": {
+                "type": "object",
+                "required": [
+                  "method"
+                ],
+                "properties": {
+                  "method": {
+                    "const": "authored"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "origins": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^rnet://client/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                }
+              }
+            }
+          },
+          "else": {
+            "type": "object",
+            "properties": {
+              "origins": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^rnet://origin/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                }
+              }
+            }
+          }
+        }
+      ],
       "additionalProperties": false
     },
     "user": {

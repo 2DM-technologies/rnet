@@ -9,6 +9,7 @@ import {
 
 const uuid = "018f1f4e-7b3a-7cc1-8b7a-123456789abc";
 const originUuid = "018f1f4e-7b3a-7cc1-8b7a-123456789abd";
+const clientUuid = "018f1f4e-7b3a-7cc1-8b7a-123456789abe";
 const hash = `sha256:${"a".repeat(64)}`;
 const owner = "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d";
 
@@ -67,6 +68,44 @@ describe("canonical schema behavior", () => {
     if (!invalid.ok) {
       expect(invalid.issues[0]?.instancePath.startsWith("/objects/0/properties")).toBe(true);
     }
+  });
+
+  test("correlates provenance method with the origin namespace", () => {
+    const authored = {
+      rnet_schema: RNET_SCHEMA_VERSION,
+      uri: `rnet://object/${uuid}`,
+      owner,
+      type: "note",
+      elements: [],
+      source: {
+        ingest: { method: "authored", reproducible: false },
+        origins: [`rnet://client/${clientUuid}`],
+        properties: {},
+      },
+    };
+    expect(validateSchema("media-object", authored).ok).toBe(true);
+    expect(
+      validateSchema("media-object", {
+        ...authored,
+        source: { ...authored.source, origins: [`rnet://origin/${originUuid}`] },
+      }).ok,
+    ).toBe(false);
+
+    const parsed = {
+      ...authored,
+      source: {
+        ...authored.source,
+        ingest: { method: "parser", reproducible: true },
+        origins: [`rnet://origin/${originUuid}`],
+      },
+    };
+    expect(validateSchema("media-object", parsed).ok).toBe(true);
+    expect(
+      validateSchema("media-object", {
+        ...parsed,
+        source: { ...parsed.source, origins: [`rnet://client/${clientUuid}`] },
+      }).ok,
+    ).toBe(false);
   });
 
   test("separates UUID record identity from payload identity", () => {
