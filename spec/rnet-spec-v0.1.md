@@ -199,7 +199,7 @@ When elements *do* attach to a transaction, they are files: an emailed receipt (
 | Block | Written by | Mutability |
 |---|---|---|
 | `source` | Ingestion runtimes only | Immutable after ingest. Re-ingestion creates a new revision, never edits in place. |
-| `user` | The owner, via clients holding `write:user` | Freely mutable by owner. Revision-protected (§6.2). |
+| `user` | The owner, via clients holding `write:user` | Freely mutable by owner. Every accepted write is retained in history; the latest committed revision is current (§6.2). |
 | `inferred` | Models, via push operations; clients and users holding `write:inferred` | **A map keyed by writer and task** — the store's analyses under its identifier (`rhizome:categorize`), a client's under its registered name (`rbudget:forecast`), and a user's under `user/{user_uuid}` (`user/018f…:correction`). Callers provide a bare task name; the store assigns the authenticated writer prefix. Writers are globally unique within a store, so keys cannot collide and there is no unprefixed case. Each entry carries its own `model`, `inferred_at`, optional `confidence`, and `properties`, so the metadata describes exactly one inference. **This block is memory scoped to the record.** Some entries are task output, recomputed from `source` whenever the task re-runs. Others accumulated — a user's correction, a pattern an agent noticed across several objects, an understanding built over a conversation — and re-running a task cannot reproduce them. Entries of the second kind set `durable: true`, and a push task MUST NOT replace a durable entry. A task can never set the flag on its own output — `durable` means *cannot be reproduced by re-running*, and task output is by definition what re-running produces — so only agent runs and user-driven writes may set it. Otherwise a re-run replaces only its own key. Consumers MUST treat entries as advisory. |
 | `x-*` | Anyone, namespaced | Legal only at the top level of the core stored document. Consumers MUST ignore namespaces they don't understand. |
 
@@ -231,7 +231,7 @@ Skill and parser identifiers are meaningful within the store that produced them;
 | Field | Notes |
 |---|---|
 | `rnet_schema` | Protocol version this document was written under. Required on every stored document — origins, elements, objects, and Vibes alike — so each is self-describing and a future migration can run incrementally. Documents carry **no `$schema` field**: a validator is pointed at a schema by the application through a registry keyed on `$id`, and storing a hosting URL alongside a version pin would duplicate the same fact in two forms that can disagree. |
-| `uri` | `rnet://object/{uuid}` — a store-minted UUIDv7. Objects, elements, and origins have record identity independent of any payload hash; objects may mutate under revision control, while element and origin records are immutable. Clients do not choose record identifiers. |
+| `uri` | `rnet://object/{uuid}` — a store-minted UUIDv7. Objects, elements, and origins have record identity independent of any payload hash; objects may mutate with retained revision history, while element and origin records are immutable. Clients do not choose record identifiers. |
 | `owner` | Immutable `rnet://id/{uuidv7}` identity assigned by the store at creation. Ownership governs administration, not delegated access. |
 | `type` | Open vocabulary with registered core types (§7). Unregistered types are legal. |
 | `elements` | Ordered list of MediaElement URIs. MAY be empty. |
@@ -309,7 +309,7 @@ A grant is `{subject, scope[]}` attached to a Vibe. Subjects use one of these na
 | Scope | Permits | Required hard limits |
 |---|---|---|
 | `read` | Fetch the Vibe, its objects, their elements | **Never includes origin artifacts.** Origins are owner-only and not delegable by any scope — a raw export is strictly more revealing than the objects parsed from it. |
-| `write:user` | Mutate `user` blocks of objects in the Vibe | MUST NOT touch `source`, `inferred`, `keys`, `type`, or `elements`. Revision-protected (§6.2). |
+| `write:user` | Mutate `user` blocks of objects in the Vibe | MUST NOT touch `source`, `inferred`, `keys`, `type`, or `elements`. Writes are retained in history and otherwise use last-write-wins semantics (§6.2). |
 | `write:objects` | Atomically create objects and their new elements for the Vibe | Created records inherit the Vibe's owner. Created objects carry `source.ingest.method: "authored"` and an origin naming the creating client (`rnet://client/{uuid}`). `source` is immutable once written, as always. New element uploads MUST be committed with the object that first references them; the scope does not authorize detached element creation or attaching a pre-existing object. |
 | `write:inferred` | Write `inferred` entries directly, without a server-mediated push | The caller supplies a bare task name and the store assigns the writer half: a client uses its registered name and a user uses `user/{user_uuid}`. No subject can write under another's namespace or the store's. Client/task output MUST NOT set `durable: true`; durable entries are reserved for user-driven or accumulated writes that cannot be reproduced by rerunning a task. |
 | `push` | Invoke push operations (§4.3) on the Vibe | Writes land only in `inferred` blocks (object- and Vibe-level). |
@@ -367,7 +367,6 @@ Stores differ on how failures are encoded; they MUST NOT differ on what constitu
 
 | Condition | The caller MUST be able to determine |
 |---|---|
-| A `user` write carries a stale revision | That the write conflicted, and the current revision |
 | A required scope is not held | That authorization failed, **and which scope was missing** |
 | A document violates its schema | That validation failed, and where — a JSON Schema pointer into the offending document |
 | A `source` block fails §2.3 | That the ingest record was non-conformant, and **which rule** it failed |
@@ -391,9 +390,11 @@ Naming the missing scope and the failing rule is the part that matters: a caller
 `rnet_schema` follows semver-lite: `0.x` may break; from `1.0`, additive-only within a major. Consumers MUST reject majors they don't understand and MUST ignore unknown top-level `x-*` fields, which makes namespaced document evolution non-breaking without opening embedded control records to accidental extension.
 
 ### 6.2 Revisions
-`source` and `user` blocks carry monotonic revision counters (store-assigned). A write to `user` MUST name the revision it expects to replace, and the store MUST reject a stale revision — last-write-wins is not acceptable for user data. How that precondition is encoded is transport-specific.
+Stores MUST retain monotonic, store-assigned revisions for `source`, `user`, and `inferred` history. These revisions identify historical snapshots; they are not write preconditions and need not appear in current documents.
 
-`inferred` entries are versioned in the store's revision log like every other block, so superseded readings remain retrievable — which matters more than it would for pure task output, since accumulated entries cannot be recomputed. They carry no concurrency check: two runs of the same task are independent re-derivations rather than conflicting edits, so the later one wins. Task-keying already prevents the collision that would matter — distinct tasks write distinct keys and cannot clobber each other.
+An accepted `user` write becomes a new retained revision and replaces the current `user` block. If writes overlap, each committed write remains in history and the latest committed revision is current: user writes are last-write-wins. Superseded user revisions MUST remain retrievable. Revert reads an old snapshot and writes it through the normal mutation path as a new current revision; it never erases or rewinds history.
+
+`inferred` entries are versioned in the store's revision log like every other block, so superseded readings remain retrievable — which matters more than it would for pure task output, since accumulated entries cannot be recomputed. Two runs of the same task are independent re-derivations, so the later one wins. Task-keying already prevents the collision that would matter — distinct tasks write distinct keys and cannot clobber each other.
 
 ### 6.3 Deletion & the right to be forgotten
 Only a record's owner may tombstone it. Deleting an element tombstones its UUID record. Objects referencing that record remain valid — meaning survives, payload access through that URI does not. The same semantics apply to origins: deletion tombstones the UUID record, derived objects remain valid, and the ability to re-run ingestion through that origin is lost — stores SHOULD warn before deleting an origin that live objects reference.
@@ -452,7 +453,7 @@ Operations, not routes: a store binds these to whatever transport it exposes.
                                     store's writer key, e.g. rhizome:categorize
  7. client:rbudget is granted     ← ["read", "write:user", "push"]
  8. read the Vibe's objects       ← renders; user edits a category
-    write the user block            (at the current revision) → sticky forever
+    write the user block            → sticky forever; prior value remains in history
  9. Monthly: steps 3-6 repeat via pull config; the Vibe stays alive.
 
 Novel-format variant of step 3: unknown CSV dialect → runtime generates a parser,

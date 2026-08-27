@@ -131,7 +131,7 @@
     },
     "user": {
       "type": "object",
-      "description": "Written by the owner via clients holding write:user. Freely mutable; revision-protected.",
+      "description": "Written by the owner via clients holding write:user. Freely mutable by authorized writers; every accepted write is retained in history and the latest committed revision is current.",
       "required": [
         "properties"
       ],
