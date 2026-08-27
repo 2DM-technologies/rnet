@@ -6,6 +6,7 @@
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
+    "./patterns": "./src/patterns.ts",
     "./schemas": "./src/generated/schemas.ts"
   },
   "files": [
