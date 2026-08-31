@@ -243,10 +243,29 @@ export const mediaObjectSchema = {
     },
     "elements": {
       "type": "array",
-      "description": "Ordered MediaElement URIs. MAY be empty.",
+      "description": "Ordered MediaElement associations. MAY be empty. Role and alt describe this association rather than the immutable element record.",
       "items": {
-        "type": "string",
-        "pattern": "^rnet://element/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        "type": "object",
+        "required": [
+          "uri"
+        ],
+        "properties": {
+          "uri": {
+            "type": "string",
+            "pattern": "^rnet://element/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "role": {
+            "enum": [
+              "title",
+              "content",
+              "preview"
+            ]
+          },
+          "alt": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
       }
     },
     "keys": {

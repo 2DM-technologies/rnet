@@ -99,7 +99,13 @@
       "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abf",
       "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
       "type": "note",
-      "elements": [],
+      "elements": [
+        {
+          "uri": "rnet://element/018f1f4e-7b3a-7cc1-8b7a-123456789ad1",
+          "role": "content",
+          "alt": "A thought"
+        }
+      ],
       "source": {
         "ingest": {
           "method": "authored",
