@@ -8,6 +8,7 @@ import {
   originArtifactSchema,
   trackPropertiesSchema,
   transactionPropertiesSchema,
+  tweetPropertiesSchema,
   vibeSchema,
 } from "./schemas.ts";
 
@@ -18,4 +19,5 @@ export type MediaObject = FromSchema<typeof mediaObjectSchema, { keepDefaultedPr
 export type OriginArtifact = FromSchema<typeof originArtifactSchema, { keepDefaultedPropertiesOptional: true }>;
 export type TrackProperties = FromSchema<typeof trackPropertiesSchema, { keepDefaultedPropertiesOptional: true }>;
 export type TransactionProperties = FromSchema<typeof transactionPropertiesSchema, { keepDefaultedPropertiesOptional: true }>;
+export type TweetProperties = FromSchema<typeof tweetPropertiesSchema, { keepDefaultedPropertiesOptional: true }>;
 export type Vibe = FromSchema<typeof vibeSchema, { keepDefaultedPropertiesOptional: true; references: [typeof grantSchema] }>;

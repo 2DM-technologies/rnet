@@ -1,5 +1,50 @@
 [
   {
+    "name": "accepts a tweet with structured element references",
+    "schema": "media-object",
+    "valid": true,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abb",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "type": "tweet",
+      "elements": [
+        {
+          "uri": "rnet://element/018f1f4e-7b3a-7cc1-8b7a-123456789abc",
+          "role": "content"
+        }
+      ],
+      "keys": {
+        "x_tweet_id": "1234567890",
+        "x_author_id": "9876543210",
+        "canonical_url": "https://x.com/example/status/1234567890"
+      },
+      "source": {
+        "ingest": {
+          "method": "parser",
+          "reproducible": true
+        },
+        "origins": [
+          "rnet://origin/018f1f4e-7b3a-7cc1-8b7a-123456789ad0"
+        ],
+        "properties": {
+          "published_at": "2026-08-21T12:00:00Z",
+          "author_handle": "example",
+          "author_name": "Example User",
+          "post_kind": "original",
+          "language": "en",
+          "possibly_sensitive": false,
+          "edit_history_ids": [
+            "1234567890"
+          ],
+          "entities": {
+            "urls": []
+          }
+        }
+      }
+    }
+  },
+  {
     "name": "accepts a zero-element transaction",
     "schema": "media-object",
     "valid": true,
