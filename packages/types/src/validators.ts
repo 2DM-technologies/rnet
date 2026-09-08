@@ -9,6 +9,7 @@ import {
   originArtifactSchema,
   rnetSchemas,
   trackPropertiesSchema,
+  tweetPropertiesSchema,
   transactionPropertiesSchema,
   vibeSchema,
 } from "./generated/schemas.ts";
@@ -19,6 +20,7 @@ import type {
   MediaObject,
   OriginArtifact,
   TrackProperties,
+  TweetProperties,
   TransactionProperties,
   Vibe,
 } from "./generated/types.ts";
@@ -30,6 +32,7 @@ export interface SchemaTypes {
   "media-object": MediaObject;
   "origin-artifact": OriginArtifact;
   track: TrackProperties;
+  tweet: TweetProperties;
   transaction: TransactionProperties;
   vibe: Vibe;
 }
@@ -87,12 +90,14 @@ export const validators = {
   "media-object": compiled<MediaObject>(mediaObjectSchema.$id),
   "origin-artifact": compiled<OriginArtifact>(originArtifactSchema.$id),
   track: compiled<TrackProperties>(trackPropertiesSchema.$id),
+  tweet: compiled<TweetProperties>(tweetPropertiesSchema.$id),
   transaction: compiled<TransactionProperties>(transactionPropertiesSchema.$id),
   vibe: compiled<Vibe>(vibeSchema.$id),
 } satisfies { [Name in SchemaName]: ValidateFunction<SchemaTypes[Name]> };
 
 const OBJECT_TYPES_REGISTRY: Record<string, ValidateFunction> = {
   track: validators.track,
+  tweet: validators.tweet,
   transaction: validators.transaction,
 };
 

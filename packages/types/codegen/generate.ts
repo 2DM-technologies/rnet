@@ -21,6 +21,7 @@ const publicNames: Record<string, Pick<SchemaDescriptor, "constName" | "typeName
   "media-object.json": { constName: "mediaObjectSchema", typeName: "MediaObject" },
   "origin-artifact.json": { constName: "originArtifactSchema", typeName: "OriginArtifact" },
   "types/track.json": { constName: "trackPropertiesSchema", typeName: "TrackProperties" },
+  "types/tweet.json": { constName: "tweetPropertiesSchema", typeName: "TweetProperties" },
   "types/transaction.json": {
     constName: "transactionPropertiesSchema",
     typeName: "TransactionProperties",

@@ -236,17 +236,36 @@ export const mediaObjectSchema = {
     },
     "type": {
       "type": "string",
-      "description": "Open vocabulary. The registered core vocabulary currently includes transaction and track; unregistered types such as post, photo, note, contact, event, book, article, and receipt remain legal.",
+      "description": "Open vocabulary. The registered core vocabulary currently includes transaction, track, and tweet; unregistered types such as post, photo, note, contact, event, book, article, and receipt remain legal.",
       "minLength": 1,
       "maxLength": 128,
       "pattern": "^[a-z][a-z0-9_.-]*$"
     },
     "elements": {
       "type": "array",
-      "description": "Ordered MediaElement URIs. MAY be empty.",
+      "description": "Ordered MediaElement associations. MAY be empty. Role and alt describe this association rather than the immutable element record.",
       "items": {
-        "type": "string",
-        "pattern": "^rnet://element/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        "type": "object",
+        "required": [
+          "uri"
+        ],
+        "properties": {
+          "uri": {
+            "type": "string",
+            "pattern": "^rnet://element/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "role": {
+            "enum": [
+              "title",
+              "content",
+              "preview"
+            ]
+          },
+          "alt": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
       }
     },
     "keys": {
@@ -538,6 +557,82 @@ export const transactionPropertiesSchema = {
   "$comment": "additionalProperties stays open: source formats carry fields beyond the core vocabulary (check numbers, MCC codes, pending flags). The vocabulary defines the floor, not the ceiling."
 } as const;
 
+export const tweetPropertiesSchema = {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rnet.network/schemas/0.1/types/tweet.json",
+  "title": "tweet — source.properties vocabulary",
+  "description": "Registered core type. Validates source.properties for objects with type \"tweet\". Exact post text is a text/plain MediaElement and is deliberately not duplicated here. Stable provider identifiers and the canonical post URL belong in keys.",
+  "type": "object",
+  "required": [
+    "published_at",
+    "post_kind"
+  ],
+  "properties": {
+    "text": false,
+    "full_text": false,
+    "published_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "The source publication timestamp."
+    },
+    "author_handle": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "author_name": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "post_kind": {
+      "type": "string",
+      "enum": [
+        "original",
+        "quote"
+      ],
+      "description": "The eligible authored-post form represented by this object. Replies and bare reposts are not tweet candidates."
+    },
+    "conversation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "referenced_post_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "uniqueItems": true
+    },
+    "language": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 35
+    },
+    "possibly_sensitive": {
+      "type": "boolean"
+    },
+    "edit_history_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "uniqueItems": true
+    },
+    "entities": {
+      "type": "object",
+      "description": "Structured source entities such as URLs, mentions, hashtags, cashtags, and annotations. Text offsets and source URLs remain facts; this block does not rewrite the text element.",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true,
+  "$comment": "The vocabulary defines stable cross-import facts and stays open for source-specific metadata. text and full_text are forbidden so the exact post payload remains single-sourced in its text element. Volatile engagement metrics must not participate in semantic identity."
+} as const;
+
 export const vibeSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://rnet.network/schemas/0.1/vibe.json",
@@ -675,5 +770,6 @@ export const rnetSchemas = [
   originArtifactSchema,
   trackPropertiesSchema,
   transactionPropertiesSchema,
+  tweetPropertiesSchema,
   vibeSchema,
 ] as const;

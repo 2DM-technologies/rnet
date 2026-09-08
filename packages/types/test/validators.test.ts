@@ -52,11 +52,51 @@ describe("canonical schema behavior", () => {
         source: { ...transaction.source, properties: { amount: "-4.50", currency: "USD" } },
       }).ok,
     ).toBe(true);
+    const tweet = {
+      ...object,
+      type: "tweet",
+      elements: [{ uri: `rnet://element/${uuid}`, role: "content" }],
+      keys: {
+        x_tweet_id: "1234567890",
+        x_author_id: "9876543210",
+        canonical_url: "https://x.com/example/status/1234567890",
+      },
+      source: {
+        ...object.source,
+        properties: {
+          published_at: "2026-08-21T12:00:00Z",
+          author_handle: "example",
+          author_name: "Example User",
+          post_kind: "original",
+          language: "en",
+          entities: { urls: [] },
+        },
+      },
+    };
+    expect(validateMediaObject(tweet).ok).toBe(true);
+    expect(
+      validateMediaObject({
+        ...tweet,
+        source: { ...tweet.source, properties: { ...tweet.source.properties, text: "duplicate" } },
+      }).ok,
+    ).toBe(false);
+    expect(
+      validateMediaObject({
+        ...tweet,
+        source: { ...tweet.source, properties: { post_kind: "reply" } },
+      }).ok,
+    ).toBe(false);
   });
 
   test("validates an object type vocabulary without requiring a wire envelope", () => {
     expect(validateMediaObjectProperties("track", { artist: "Missing title" }).ok).toBe(false);
     expect(validateMediaObjectProperties("track", { title: "A track" }).ok).toBe(true);
+    expect(
+      validateMediaObjectProperties("tweet", {
+        published_at: "2026-08-21T12:00:00Z",
+        post_kind: "quote",
+      }).ok,
+    ).toBe(true);
     expect(validateMediaObjectProperties("custom", { anything: true }).ok).toBe(true);
 
     const invalid = validateMediaObjectProperties(
@@ -121,6 +161,47 @@ describe("canonical schema behavior", () => {
     expect(validateSchema("media-element", element).ok).toBe(true);
     expect(validateSchema("media-element", { ...element, uri: `rnet://element/${hash}` }).ok).toBe(false);
     expect(validateSchema("media-element", { ...element, owner: undefined }).ok).toBe(false);
+  });
+
+  test("requires structured element associations and validates their context", () => {
+    const object = {
+      rnet_schema: RNET_SCHEMA_VERSION,
+      uri: `rnet://object/${uuid}`,
+      owner,
+      type: "note",
+      elements: [
+        {
+          uri: `rnet://element/${uuid}`,
+          role: "content",
+          alt: "Synthetic note body",
+        },
+      ],
+      source: {
+        ingest: { method: "authored", reproducible: false },
+        origins: [`rnet://client/${clientUuid}`],
+        properties: {},
+      },
+    };
+
+    expect(validateSchema("media-object", object).ok).toBe(true);
+    expect(
+      validateSchema("media-object", {
+        ...object,
+        elements: [`rnet://element/${uuid}`],
+      }).ok,
+    ).toBe(false);
+    expect(
+      validateSchema("media-object", {
+        ...object,
+        elements: [{ uri: `rnet://element/${uuid}`, role: "thumbnail" }],
+      }).ok,
+    ).toBe(false);
+    expect(
+      validateSchema("media-object", {
+        ...object,
+        elements: [{ uri: `rnet://element/${uuid}`, caption: "not in the vocabulary" }],
+      }).ok,
+    ).toBe(false);
   });
 
   test("requires UUIDv7 user identities in owners and grant subjects", () => {

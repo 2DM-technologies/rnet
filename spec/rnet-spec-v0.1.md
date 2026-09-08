@@ -194,7 +194,7 @@ The core unit of meaning: properties plus zero or more MediaElements, carrying *
 
 The first two entries are store task output: re-running the task recomputes them, and each replaces only its own key. The third was written by a client holding `write:inferred`, under its own namespace, and carries `durable: true` — it records something learned rather than computed, so no re-run may replace it. A direct user write is keyed as `user/{user_uuid}:{task}`; the caller supplies only the bare task and the store assigns that prefix. `durable` defaults to false and is omitted where it does not apply.
 
-When elements *do* attach to a transaction, they are files: an emailed receipt (one `document` element), a check image, the prose of a memo. Fields-versus-files (§2.1) is the membership rule.
+When elements *do* attach to a transaction, they are files: an emailed receipt (one `document` element), a check image, the prose of a memo. Fields-versus-files (§2.1) is the membership rule. Objects associate elements through ordered references such as `{ "uri": "rnet://element/{uuid}", "role": "content", "alt": "Receipt for the transaction" }`. `uri` is required; `role` is optional and is one of `title`, `content`, or `preview`; `alt` is optional. Role and alt text belong to the association because the same immutable element can serve a different purpose or description in another object. Producers omit unknown context rather than guessing it.
 
 | Block | Written by | Mutability |
 |---|---|---|
@@ -234,7 +234,7 @@ Skill and parser identifiers are meaningful within the store that produced them;
 | `uri` | `rnet://object/{uuid}` — a store-minted UUIDv7. Objects, elements, and origins have record identity independent of any payload hash; objects may mutate with retained revision history, while element and origin records are immutable. Clients do not choose record identifiers. |
 | `owner` | Immutable `rnet://id/{uuidv7}` identity assigned by the store at creation. Ownership governs administration, not delegated access. |
 | `type` | Open vocabulary with registered core types (§7). Unregistered types are legal. |
-| `elements` | Ordered list of MediaElement URIs. MAY be empty. |
+| `elements` | Ordered list of MediaElement reference objects. Each requires `uri` and may carry association-specific `role` and `alt`. MAY be empty. |
 | `keys` | External global identifiers for cross-service joins: `isrc`, `isbn`, `fitid`, `url`, `ean`, etc. |
 
 ### 2.4 Vibe
@@ -410,6 +410,8 @@ Initial property vocabularies (full JSON Schemas at `/schemas/0.1/types/`):
 **`transaction`** — `amount` (signed base-10 decimal string, required), `currency` (ISO 4217, required), `posted_at`, `raw_description`. A string representation preserves exact monetary precision across JSON implementations. Keys: `fitid`. Typically zero elements (§2.1): every field here is queried on. Attached files — receipts, check images — are the element case.
 
 **`track`** — `title`, `artist`, `album`, `duration_ms`, `released` — all fields, since all are queried on. Keys: `isrc` (the cross-service join key). Album art, if stored, is an `image` element. Normally zero elements: audio lives on the platform, so locators go in `keys` and identity/meaning in `source.properties`.
+
+**`tweet`** — `published_at` and `post_kind` are required; author handle/name, conversation and referenced-post IDs, language, sensitivity/edit metadata, and structured entities are optional source facts. Keys include `x_tweet_id`, `x_author_id`, and the canonical post URL. Exact post text is the first `text/plain` element and is not duplicated into properties; image and video elements follow in source order. Quote targets remain inert identifiers or URLs rather than object relationships. Volatile engagement metrics do not participate in semantic identity.
 
 **`post`**, **`photo`**, **`note`**, **`contact`**, **`event`**, **`book`**, **`article`**, **`receipt`** — legal open-vocabulary names without a registered v0.1 properties schema. Their vocabularies can be registered as their ingestion paths ship.
 
