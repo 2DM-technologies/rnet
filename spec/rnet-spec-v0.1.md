@@ -72,7 +72,15 @@ Objects whose meaning is entirely factual carry **zero elements** — the pure m
   "mime": "text/plain",
   "bytes": "https://blobs.example.com/9f86d08...",
   "byte_size": 34,
-  "created_at": "2026-08-14T09:12:00Z"
+  "alt": "Handwritten note: groceries for the weekend",
+  "created_at": "2026-08-14T09:12:00Z",
+  "inferred": {
+    "rhizome:describe_media": {
+      "model": "openai/gpt-5.6-luna",
+      "inferred_at": "2026-08-15T22:05:00Z",
+      "properties": { "caption": "A grocery list on lined paper", "medium": "photo" }
+    }
+  }
 }
 ```
 
@@ -86,11 +94,13 @@ Objects whose meaning is entirely factual carry **zero elements** — the pure m
 | `mime` | string | ✓ | IANA media type. `mime` is truth; `kind` is the consumption hint. |
 | `bytes` | string (URL) | ✓ | Retrievable payload location. The returned bytes MUST hash to `content_hash`. |
 | `byte_size` | integer | — | |
+| `alt` | string | — | Human-authored description of the payload, written at creation. It describes the bytes, so it belongs to the element rather than to any one object's reference. |
 | `created_at` | ISO 8601 | — | |
+| `inferred` | object | — | The element's inferred block: the same writer-and-task keyed map as an object's (§2.3), holding descriptions and analyses of the payload. The one mutable part of an element record; because the payload never changes, an entry here is derived once and stays current until the model or task changes. |
 
 **Every element's bytes are reachable.** `bytes` is required and always resolves. rNet does not model media it cannot serve: content locked inside a platform is not an element with a missing payload, it is a **reference** — recorded in the owning object's `keys` (e.g. `isrc`, `spotify_uri`, `apple_music_id`) so clients can hand off to whatever player the user has. A `track` is therefore normally a zero-element object: identity and meaning in `source.properties`, locators in `keys`.
 
-**Record identity and payload identity are separate.** A MediaElement is an immutable UUID-identified record: a payload plus its contextual metadata. Its payload is content-addressed by `content_hash`. Multiple element records MAY therefore carry the same `content_hash` while differing in context or metadata; physical payload storage MAY deduplicate them. Neither an element UUID nor a content hash is an authorization capability.
+**Record identity and payload identity are separate.** A MediaElement is a UUID-identified record whose payload and contextual metadata are immutable; only its `inferred` block changes. Its payload is content-addressed by `content_hash`. Multiple element records MAY therefore carry the same `content_hash` while differing in context or metadata; physical payload storage MAY deduplicate them. Neither an element UUID nor a content hash is an authorization capability.
 
 ### 2.2 OriginArtifact
 
@@ -194,7 +204,7 @@ The core unit of meaning: properties plus zero or more MediaElements, carrying *
 
 The first two entries are task output written by the client `rbudget` under its own namespace: re-running the task recomputes them, and each replaces only its own key. The third was written by the same client's agent run and carries `durable: true` — it records something learned across several records rather than computed from this one, so no re-run may replace it. People do not write `inferred` entries: the owner's own assertions and corrections are data and belong in the `user` block. `durable` defaults to false and is omitted where it does not apply.
 
-When elements *do* attach to a transaction, they are files: an emailed receipt (one `document` element), a check image, the prose of a memo. Fields-versus-files (§2.1) is the membership rule. Objects associate elements through ordered references such as `{ "uri": "rnet://element/{uuid}", "role": "content", "alt": "Receipt for the transaction" }`. `uri` is required; `role` is optional and is one of `title`, `content`, or `preview`; `alt` is optional. Role and alt text belong to the association because the same immutable element can serve a different purpose or description in another object. Producers omit unknown context rather than guessing it.
+When elements *do* attach to a transaction, they are files: an emailed receipt (one `document` element), a check image, the prose of a memo. Fields-versus-files (§2.1) is the membership rule. Objects associate elements through ordered references such as `{ "uri": "rnet://element/{uuid}", "role": "content" }`. `uri` is required; `role` is optional and is one of `title`, `content`, or `preview`. Role belongs to the association because the same element can serve a different purpose in another object; a description of the payload is the element's own `alt` (§2.1), because it describes the bytes wherever they appear. Producers omit unknown context rather than guessing it.
 
 | Block | Written by | Mutability |
 |---|---|---|
@@ -234,7 +244,7 @@ Skill and parser identifiers are meaningful within the store that produced them;
 | `uri` | `rnet://object/{uuid}` — a store-minted UUIDv7. Objects, elements, and origins have record identity independent of any payload hash; objects may mutate with retained revision history, while element and origin records are immutable. Clients do not choose record identifiers. |
 | `owner` | Immutable `rnet://id/{uuidv7}` identity assigned by the store at creation. Ownership governs administration, not delegated access. |
 | `type` | Open vocabulary with registered core types (§7). Unregistered types are legal. |
-| `elements` | Ordered list of MediaElement reference objects. Each requires `uri` and may carry association-specific `role` and `alt`. MAY be empty. |
+| `elements` | Ordered list of MediaElement reference objects. Each requires `uri` and may carry an association-specific `role`. MAY be empty. |
 | `keys` | External global identifiers for cross-service joins: `isrc`, `isbn`, `fitid`, `url`, `ean`, etc. |
 
 ### 2.4 Vibe
@@ -312,7 +322,7 @@ A grant is `{subject, scope[]}` attached to a Vibe. Subjects use one of these na
 | `write:user` | Mutate `user` blocks of objects in the Vibe | MUST NOT touch `source`, `inferred`, `keys`, `type`, or `elements`. Writes are retained in history and otherwise use last-write-wins semantics (§6.2). |
 | `write:objects` | Atomically create objects and their new elements for the Vibe | Created records inherit the Vibe's owner. Created objects carry `source.ingest.method: "authored"` and an origin naming the creating client (`rnet://client/{uuid}`). `source` is immutable once written, as always. New element uploads MUST be committed with the object that first references them; the scope does not authorize detached element creation or attaching a pre-existing object. |
 | `write:inferred` | Write `inferred` entries directly, without a server-mediated push | The caller supplies a bare task name and the store assigns the writer half from the client's registered name. Only client subjects hold a writer namespace; a store MUST reject `inferred` writes from user actors, whose assertions belong in the `user` block under `write:user`. No subject can write under another's namespace or the store's. A client MAY set `durable: true` on entries its agent runs accumulated; it MUST NOT set it on reproducible task output, because a durable entry is never replaced by a re-run. Stores cannot verify which is which and MUST NOT treat another writer's entries as trusted context for their own tasks. |
-| `push` | Invoke push operations (§4.3) on the Vibe | Writes land only in `inferred` blocks (object- and Vibe-level). |
+| `push` | Invoke push operations (§4.3) on the Vibe | Writes land only in `inferred` blocks (element-, object-, and Vibe-level). |
 | `pull` | Invoke a pull on the Vibe's already-configured sources | Cannot modify pull configuration and cannot read origins — both are owner-only, exercised through the store's own surfaces. This is the refresh button, nothing more. |
 
 Scope semantics are **store-enforced, always** — never client-honor-system. Grants are set by the owner alone — no scope delegates the ability to grant (§8). The hard limits are: `write:user` cannot corrupt `source`; `write:objects` cannot import a pre-existing object from another Vibe; `push` cannot write `user`; no scope exposes origins; `pull` cannot rewrite pull configuration; revoked grants fail closed.
@@ -353,7 +363,7 @@ This is what makes delegated authoring safe to reason about: a client holding `w
 
 The two modalities by which a Vibe engages a model. Both are asynchronous: a store accepts the request, returns a handle, and completes the work independently.
 
-**Push** — send the Vibe, or a selection from it, to a model for analysis. The store assembles context (the Vibe's inferred summary plus the selected objects), invokes the target, and lands results in `inferred` blocks at the object and/or Vibe level, keyed under **the store's own writer namespace**. Push is how a Vibe *thinks about itself*, with or without any client attached. Push writes reach `inferred` and nothing else.
+**Push** — send the Vibe, or a selection from it, to a model for analysis. The store assembles context (the Vibe's inferred summary plus the selected objects), invokes the target, and lands results in `inferred` blocks at the element, object, and/or Vibe level, keyed under **the store's own writer namespace**. Push is how a Vibe *thinks about itself*, with or without any client attached. Push writes reach `inferred` and nothing else.
 
 **Task names are store-defined.** `categorize` on one store need not exist on another; clients SHOULD discover a store's available tasks rather than assume a vocabulary. The operation's shape is protocol, its task list is local — the same split as skill identifiers in `source.ingest`.
 

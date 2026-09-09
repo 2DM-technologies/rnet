@@ -173,7 +173,6 @@ describe("canonical schema behavior", () => {
         {
           uri: `rnet://element/${uuid}`,
           role: "content",
-          alt: "Synthetic note body",
         },
       ],
       source: {
@@ -200,6 +199,12 @@ describe("canonical schema behavior", () => {
       validateSchema("media-object", {
         ...object,
         elements: [{ uri: `rnet://element/${uuid}`, caption: "not in the vocabulary" }],
+      }).ok,
+    ).toBe(false);
+    expect(
+      validateSchema("media-object", {
+        ...object,
+        elements: [{ uri: `rnet://element/${uuid}`, alt: "belongs on the element" }],
       }).ok,
     ).toBe(false);
   });

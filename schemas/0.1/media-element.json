@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://rnet.network/schemas/0.1/media-element.json",
   "title": "MediaElement",
-  "description": "An immutable, UUIDv7-identified atomic content record: an owner, a content-addressed payload, and contextual metadata. Five kinds, closed set: an element kind exists iff a human consumes that thing directly. Every live element resolves — bytes is required; platform-locked content is referenced via the owning object's keys, never modelled as an element with a missing payload.",
+  "description": "A UUIDv7-identified atomic content record: an owner, a content-addressed payload, and contextual metadata, all immutable, plus an inferred block that is the record's only mutable part. Five kinds, closed set: an element kind exists iff a human consumes that thing directly. Every live element resolves — bytes is required; platform-locked content is referenced via the owning object's keys, never modelled as an element with a missing payload.",
   "type": "object",
   "required": [
     "rnet_schema",
@@ -57,9 +57,51 @@
       "type": "integer",
       "minimum": 0
     },
+    "alt": {
+      "type": "string",
+      "description": "Human-authored description of the payload, written at creation and immutable. Describes the bytes, so it lives here rather than on any one object's reference."
+    },
     "created_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "inferred": {
+      "type": "object",
+      "description": "A map keyed by writer and task: every key is {writer}:{task}. The element's memory: descriptions and analyses of its payload, derived once because the payload never changes. A re-run replaces only its own key, and never a durable entry. Consumers MUST treat entries as advisory.",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9._-]*:[a-z][a-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "model",
+          "properties"
+        ],
+        "properties": {
+          "model": {
+            "type": "string",
+            "minLength": 1
+          },
+          "inferred_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "durable": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, a push task MUST NOT replace this entry. Durable entries hold understanding that accumulated rather than being computed from source — a pattern an agent noticed across several objects. A task can never set this on its own output: durable means 'cannot be reproduced by re-running', and task output is by definition what re-running produces. Only agent runs may set it."
+          },
+          "properties": {
+            "type": "object"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "additionalProperties": false
+      }
     }
   },
   "patternProperties": {

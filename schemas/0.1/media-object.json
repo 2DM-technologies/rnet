@@ -36,7 +36,7 @@
     },
     "elements": {
       "type": "array",
-      "description": "Ordered MediaElement associations. MAY be empty. Role and alt describe this association rather than the immutable element record.",
+      "description": "Ordered MediaElement associations. MAY be empty. Role describes this association rather than the immutable element record; a description of the payload is the element's own alt.",
       "items": {
         "type": "object",
         "required": [
@@ -53,9 +53,6 @@
               "content",
               "preview"
             ]
-          },
-          "alt": {
-            "type": "string"
           }
         },
         "additionalProperties": false
