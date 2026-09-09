@@ -374,9 +374,9 @@ export const mediaObjectSchema = {
     },
     "inferred": {
       "type": "object",
-      "description": "A map keyed by writer and task: every key is {writer}:{task}. Memory scoped to this record — some entries are task output recomputed from source, others accumulated from corrections and agent observation and cannot be re-derived. A re-run replaces only its own key, and never a durable entry. Consumers MUST treat entries as advisory.",
+      "description": "A map keyed by writer and task: every key is {writer}:{task}. Memory scoped to this record — some entries are task output recomputed from source, others accumulated from agent observation and cannot be re-derived. A re-run replaces only its own key, and never a durable entry. Consumers MUST treat entries as advisory.",
       "propertyNames": {
-        "pattern": "^(?:[a-z][a-z0-9._-]*|user/[A-Za-z0-9._~-]+):[a-z][a-z0-9_]*$"
+        "pattern": "^[a-z][a-z0-9._-]*:[a-z][a-z0-9_]*$"
       },
       "additionalProperties": {
         "type": "object",
@@ -396,7 +396,7 @@ export const mediaObjectSchema = {
           "durable": {
             "type": "boolean",
             "default": false,
-            "description": "When true, a push task MUST NOT replace this entry. Durable entries hold understanding that accumulated rather than being computed from source — a user correction, a pattern an agent noticed across several objects. A task can never set this on its own output: durable means 'cannot be reproduced by re-running', and task output is by definition what re-running produces. Only agent runs and user-driven writes."
+            "description": "When true, a push task MUST NOT replace this entry. Durable entries hold understanding that accumulated rather than being computed from source — a pattern an agent noticed across several objects. A task can never set this on its own output: durable means 'cannot be reproduced by re-running', and task output is by definition what re-running produces. Only agent runs may set it."
           },
           "properties": {
             "type": "object"
@@ -717,9 +717,9 @@ export const vibeSchema = {
     },
     "inferred": {
       "type": "object",
-      "description": "A map keyed by writer and task: every key is {writer}:{task}. Memory scoped to this record — some entries are task output recomputed from source, others accumulated from corrections and agent observation and cannot be re-derived. A re-run replaces only its own key, and never a durable entry. Consumers MUST treat entries as advisory. The store's summarize task conventionally writes summary and tags.",
+      "description": "A map keyed by writer and task: every key is {writer}:{task}. Memory scoped to this record — some entries are task output recomputed from source, others accumulated from agent observation and cannot be re-derived. A re-run replaces only its own key, and never a durable entry. Consumers MUST treat entries as advisory. The store's summarize task conventionally writes summary and tags.",
       "propertyNames": {
-        "pattern": "^(?:[a-z][a-z0-9._-]*|user/[A-Za-z0-9._~-]+):[a-z][a-z0-9_]*$"
+        "pattern": "^[a-z][a-z0-9._-]*:[a-z][a-z0-9_]*$"
       },
       "additionalProperties": {
         "type": "object",
@@ -739,7 +739,7 @@ export const vibeSchema = {
           "durable": {
             "type": "boolean",
             "default": false,
-            "description": "When true, a push task MUST NOT replace this entry. Durable entries hold understanding that accumulated rather than being computed from source — a user correction, a pattern an agent noticed across several objects — and re-running a task cannot reproduce them. Only agent runs and user-driven writes may set this; a task may never mark its own output durable, or refresh stops working."
+            "description": "When true, a push task MUST NOT replace this entry. Durable entries hold understanding that accumulated rather than being computed from source — a pattern an agent noticed across several objects — and re-running a task cannot reproduce them. Only agent runs may set this; a task may never mark its own output durable, or refresh stops working."
           },
           "properties": {
             "type": "object"
