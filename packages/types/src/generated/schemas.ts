@@ -278,7 +278,7 @@ export const mediaObjectSchema = {
     },
     "type": {
       "type": "string",
-      "description": "Open vocabulary. The registered core vocabulary currently includes transaction, track, and tweet; unregistered types such as post, photo, note, contact, event, book, article, and receipt remain legal.",
+      "description": "Open vocabulary. The registered core vocabulary currently includes activity, transaction, track, and tweet; unregistered types such as post, photo, note, contact, event, book, article, and receipt remain legal.",
       "minLength": 1,
       "maxLength": 128,
       "pattern": "^[a-z][a-z0-9_.-]*$"
@@ -521,6 +521,242 @@ export const originArtifactSchema = {
     }
   },
   "additionalProperties": false
+} as const;
+
+export const activityPropertiesSchema = {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rnet.network/schemas/0.1/types/activity.json",
+  "title": "activity — source.properties vocabulary",
+  "description": "Registered core type for one recorded physical exercise session. Provider-neutral source facts; normally zero elements. External identifiers, such as strava_activity_id, belong in keys. Official owner-entered race results belong in user.properties.",
+  "type": "object",
+  "required": [
+    "sport"
+  ],
+  "anyOf": [
+    {
+      "required": [
+        "started_at"
+      ],
+      "properties": {
+        "started_at": {}
+      }
+    },
+    {
+      "required": [
+        "started_local"
+      ],
+      "properties": {
+        "started_local": {}
+      }
+    }
+  ],
+  "properties": {
+    "sport": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Provider-neutral sport name. Producers use run, ride, walk, swim, or workout for those sports; other nonempty names remain legal."
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 1024
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "not": {
+        "pattern": "-00:00$"
+      },
+      "description": "Known start instant, with a UTC offset or Z. Do not assign an offset to an unzoned source time; RFC3339 unknown-offset -00:00 is not a known instant."
+    },
+    "started_local": {
+      "type": "string",
+      "pattern": "^(?:(?:[0-9]{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12][0-9]|3[01])|(?:0[469]|11)-(?:0[1-9]|[12][0-9]|30)|02-(?:0[1-9]|1[0-9]|2[0-8])))|(?:(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:[02468][048]|[13579][26])00)-02-29))T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](?:\\.[0-9]+)?$",
+      "maxLength": 64,
+      "description": "Calendar-valid local start time without a zone or offset. Preserve an unknown time zone rather than interpreting this as UTC. If also carrying started_at, both MUST describe the same start."
+    },
+    "timezone": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Source-provided time zone name, preferably an IANA identifier. Omit when unknown; a name alone does not disambiguate an instant."
+    },
+    "distance_m": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Total distance in meters. Omit unavailable measurements, including manually entered or indoor sessions without a distance."
+    },
+    "elapsed_time_s": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Wall-clock duration in seconds, including pauses."
+    },
+    "timer_time_s": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Duration in seconds while the recording timer was running, excluding explicit timer pauses."
+    },
+    "moving_time_s": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Duration in seconds classified as moving by the source. Do not infer from timestamp differences."
+    },
+    "elevation_gain_m": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Cumulative positive elevation gain in meters."
+    },
+    "workout_type": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Explicit source-provided session classification, for example race or workout. A title is not evidence of a race or an official result."
+    },
+    "laps": {
+      "type": "array",
+      "maxItems": 1000,
+      "description": "Recorded source/device laps in order, never relabeled as uniform-distance splits. Unavailable lap measurements are omitted. Each lap carries at least distance or duration.",
+      "items": {
+        "type": "object",
+        "required": [
+          "index",
+          "timing_basis",
+          "provenance"
+        ],
+        "anyOf": [
+          {
+            "required": [
+              "distance_m"
+            ],
+            "properties": {
+              "distance_m": {}
+            }
+          },
+          {
+            "required": [
+              "duration_s"
+            ],
+            "properties": {
+              "duration_s": {}
+            }
+          }
+        ],
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "One-based source or calculated sequence index, in activity order."
+          },
+          "distance_m": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Actual segment distance in meters."
+          },
+          "duration_s": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Segment duration in seconds, with the stated timing_basis."
+          },
+          "timing_basis": {
+            "type": "string",
+            "enum": [
+              "elapsed",
+              "timer",
+              "moving"
+            ],
+            "description": "Elapsed includes pauses; timer counts running device timer intervals; moving requires explicit movement evidence. Timestamp differences alone are elapsed."
+          },
+          "distance_basis": {
+            "type": "string",
+            "enum": [
+              "recorded",
+              "gps"
+            ],
+            "description": "Recorded is a source/device distance measurement. GPS is calculated from geographic samples."
+          },
+          "provenance": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "Source format or measurement origin, such as tcx, fit, gpx, or manual. Source-specific file bindings may be carried in open activity properties."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "splits": {
+      "type": "array",
+      "maxItems": 1000,
+      "description": "Calculated distance splits in sequence order, including a final partial segment. Calculation and measurement bases are explicit. This is not an average pace copied into each mile.",
+      "items": {
+        "type": "object",
+        "required": [
+          "index",
+          "target_distance_m",
+          "distance_m",
+          "duration_s",
+          "timing_basis",
+          "distance_basis",
+          "method",
+          "provenance"
+        ],
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "One-based source or calculated sequence index, in activity order."
+          },
+          "distance_m": {
+            "type": "number",
+            "description": "Actual segment distance in meters.",
+            "exclusiveMinimum": 0
+          },
+          "duration_s": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Segment duration in seconds, with the stated timing_basis."
+          },
+          "timing_basis": {
+            "type": "string",
+            "enum": [
+              "elapsed",
+              "timer",
+              "moving"
+            ],
+            "description": "Elapsed includes pauses; timer counts running device timer intervals; moving requires explicit movement evidence. Timestamp differences alone are elapsed."
+          },
+          "distance_basis": {
+            "type": "string",
+            "enum": [
+              "recorded",
+              "gps"
+            ],
+            "description": "Recorded is a source/device distance measurement. GPS is calculated from geographic samples."
+          },
+          "provenance": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "Source format or measurement origin, such as tcx, fit, gpx, or manual. Source-specific file bindings may be carried in open activity properties."
+          },
+          "target_distance_m": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Nominal complete split distance in meters, e.g. 1609.344 for a mile. A final partial split retains its actual distance_m."
+          },
+          "method": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "Deterministic calculation method, e.g. linear_interpolation. Producers MUST document its boundary rule; source processing and official race results may differ."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": true,
+  "$comment": "The vocabulary defines the floor, not the ceiling. Missing measurements are absent, never zero placeholders. Raw sensor streams remain in origins. Laps/splits are bounded closed records; producers retain their provenance and must not claim unsupported timing or distance bases."
 } as const;
 
 export const trackPropertiesSchema = {
@@ -807,6 +1043,7 @@ export const rnetSchemas = [
   mediaElementSchema,
   mediaObjectSchema,
   originArtifactSchema,
+  activityPropertiesSchema,
   trackPropertiesSchema,
   transactionPropertiesSchema,
   tweetPropertiesSchema,

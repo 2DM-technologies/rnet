@@ -2,6 +2,7 @@ import Ajv2020, { type ErrorObject, type ValidateFunction } from "ajv/dist/2020.
 import addFormats from "ajv-formats";
 
 import {
+  activityPropertiesSchema,
   grantSchema,
   ingestRecordSchema,
   mediaElementSchema,
@@ -14,6 +15,7 @@ import {
   vibeSchema,
 } from "./generated/schemas.ts";
 import type {
+  ActivityProperties,
   Grant,
   IngestRecord,
   MediaElement,
@@ -26,6 +28,7 @@ import type {
 } from "./generated/types.ts";
 
 export interface SchemaTypes {
+  activity: ActivityProperties;
   grant: Grant;
   "ingest-record": IngestRecord;
   "media-element": MediaElement;
@@ -84,6 +87,7 @@ function result<T>(validator: ValidateFunction<T>, value: unknown): ValidationRe
 }
 
 export const validators = {
+  activity: compiled<ActivityProperties>(activityPropertiesSchema.$id),
   grant: compiled<Grant>(grantSchema.$id),
   "ingest-record": compiled<IngestRecord>(ingestRecordSchema.$id),
   "media-element": compiled<MediaElement>(mediaElementSchema.$id),
@@ -96,6 +100,7 @@ export const validators = {
 } satisfies { [Name in SchemaName]: ValidateFunction<SchemaTypes[Name]> };
 
 const OBJECT_TYPES_REGISTRY: Record<string, ValidateFunction> = {
+  activity: validators.activity,
   track: validators.track,
   tweet: validators.tweet,
   transaction: validators.transaction,
