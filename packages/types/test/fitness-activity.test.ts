@@ -37,6 +37,7 @@ describe("registered activity vocabulary", () => {
     const instant: FitnessActivityProperties = { sport: "walk", started_at: "2026-09-12T06:30:00-04:00" };
     expect(validators.fitness_activity(minimal)).toBe(true);
     expect(validateSchema("fitness_activity", instant).ok).toBe(true);
+    expect(validateSchema("fitness_activity", { sport: "run", started_at: "2026-09-12T06:30:00-00:00" }).ok).toBe(true);
     expect(validateMediaObject(object(minimal)).ok).toBe(true);
     expect(validateMediaObjectProperties("fitness_activity", { sport: "run" }).ok).toBe(false);
     expect(validateMediaObjectProperties("fitness_activity", { started_at: instant.started_at }).ok).toBe(false);
@@ -74,8 +75,8 @@ describe("registered activity vocabulary", () => {
     (started_local) => expect(validateSchema("fitness_activity", { sport: "run", started_local }).ok).toBe(true),
   );
 
-  test.each(["2026-09-12T06:30:00", "2026-09-12T06:30:00-00:00", "2026-02-31T06:30:00Z"])(
-    "rejects invalid or unknown-offset instants: %s",
+  test.each(["2026-09-12T06:30:00", "2026-02-31T06:30:00Z"])(
+    "rejects invalid or unzoned instants: %s",
     (started_at) => expect(validateSchema("fitness_activity", { sport: "run", started_at }).ok).toBe(false),
   );
 

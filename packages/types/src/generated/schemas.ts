@@ -564,10 +564,7 @@ export const fitnessActivityPropertiesSchema = {
     "started_at": {
       "type": "string",
       "format": "date-time",
-      "not": {
-        "pattern": "-00:00$"
-      },
-      "description": "Known start instant, with a UTC offset or Z. Do not assign an offset to an unzoned source time; RFC3339 unknown-offset -00:00 is not a known instant."
+      "description": "Known start instant in RFC3339 format. Do not assign an offset to an unzoned source time. The -00:00 convention denotes a known UTC instant whose local offset is unknown."
     },
     "started_local": {
       "type": "string",
