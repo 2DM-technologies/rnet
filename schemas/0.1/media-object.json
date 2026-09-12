@@ -29,7 +29,7 @@
     },
     "type": {
       "type": "string",
-      "description": "Open vocabulary. The registered core vocabulary currently includes activity, transaction, track, and tweet; unregistered types such as post, photo, note, contact, event, book, article, and receipt remain legal.",
+      "description": "Open vocabulary. The registered core vocabulary currently includes fitness_activity, transaction, track, and tweet; unregistered types such as post, photo, note, contact, event, book, article, and receipt remain legal.",
       "minLength": 1,
       "maxLength": 128,
       "pattern": "^[a-z][a-z0-9_.-]*$"

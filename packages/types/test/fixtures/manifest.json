@@ -555,7 +555,7 @@
   },
   {
     "name": "accepts a provider-neutral activity without unavailable measurements",
-    "schema": "activity",
+    "schema": "fitness_activity",
     "valid": true,
     "document": {
       "sport": "run",
@@ -570,7 +570,7 @@
       "rnet_schema": "0.1",
       "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abc",
       "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
-      "type": "activity",
+      "type": "fitness_activity",
       "elements": [],
       "source": {
         "ingest": {
@@ -594,7 +594,7 @@
   },
   {
     "name": "rejects an activity with no start representation",
-    "schema": "activity",
+    "schema": "fitness_activity",
     "valid": false,
     "document": {
       "sport": "run",
@@ -603,7 +603,7 @@
   },
   {
     "name": "rejects an activity with malformed recorded lap timing",
-    "schema": "activity",
+    "schema": "fitness_activity",
     "valid": false,
     "document": {
       "sport": "run",
@@ -626,7 +626,7 @@
       "rnet_schema": "0.1",
       "uri": "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abc",
       "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
-      "type": "activity",
+      "type": "fitness_activity",
       "elements": [],
       "source": {
         "ingest": {

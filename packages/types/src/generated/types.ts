@@ -6,7 +6,7 @@ import {
   mediaElementSchema,
   mediaObjectSchema,
   originArtifactSchema,
-  activityPropertiesSchema,
+  fitnessActivityPropertiesSchema,
   trackPropertiesSchema,
   transactionPropertiesSchema,
   tweetPropertiesSchema,
@@ -18,7 +18,7 @@ export type IngestRecord = FromSchema<typeof ingestRecordSchema, { keepDefaulted
 export type MediaElement = FromSchema<typeof mediaElementSchema, { keepDefaultedPropertiesOptional: true }>;
 export type MediaObject = FromSchema<typeof mediaObjectSchema, { keepDefaultedPropertiesOptional: true; references: [typeof ingestRecordSchema] }>;
 export type OriginArtifact = FromSchema<typeof originArtifactSchema, { keepDefaultedPropertiesOptional: true }>;
-export type ActivityProperties = FromSchema<typeof activityPropertiesSchema, { keepDefaultedPropertiesOptional: true }>;
+export type FitnessActivityProperties = FromSchema<typeof fitnessActivityPropertiesSchema, { keepDefaultedPropertiesOptional: true }>;
 export type TrackProperties = FromSchema<typeof trackPropertiesSchema, { keepDefaultedPropertiesOptional: true }>;
 export type TransactionProperties = FromSchema<typeof transactionPropertiesSchema, { keepDefaultedPropertiesOptional: true }>;
 export type TweetProperties = FromSchema<typeof tweetPropertiesSchema, { keepDefaultedPropertiesOptional: true }>;

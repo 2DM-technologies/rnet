@@ -278,7 +278,7 @@ export const mediaObjectSchema = {
     },
     "type": {
       "type": "string",
-      "description": "Open vocabulary. The registered core vocabulary currently includes activity, transaction, track, and tweet; unregistered types such as post, photo, note, contact, event, book, article, and receipt remain legal.",
+      "description": "Open vocabulary. The registered core vocabulary currently includes fitness_activity, transaction, track, and tweet; unregistered types such as post, photo, note, contact, event, book, article, and receipt remain legal.",
       "minLength": 1,
       "maxLength": 128,
       "pattern": "^[a-z][a-z0-9_.-]*$"
@@ -523,9 +523,9 @@ export const originArtifactSchema = {
   "additionalProperties": false
 } as const;
 
-export const activityPropertiesSchema = {
+export const fitnessActivityPropertiesSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://rnet.network/schemas/0.1/types/activity.json",
+  "$id": "https://rnet.network/schemas/0.1/types/fitness_activity.json",
   "title": "activity — source.properties vocabulary",
   "description": "Registered core type for one recorded physical exercise session. Provider-neutral source facts; normally zero elements. External identifiers, such as strava_activity_id, belong in keys. Official owner-entered race results belong in user.properties.",
   "type": "object",
@@ -1043,7 +1043,7 @@ export const rnetSchemas = [
   mediaElementSchema,
   mediaObjectSchema,
   originArtifactSchema,
-  activityPropertiesSchema,
+  fitnessActivityPropertiesSchema,
   trackPropertiesSchema,
   transactionPropertiesSchema,
   tweetPropertiesSchema,

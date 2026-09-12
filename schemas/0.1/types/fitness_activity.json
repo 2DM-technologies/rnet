@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://rnet.network/schemas/0.1/types/activity.json",
+  "$id": "https://rnet.network/schemas/0.1/types/fitness_activity.json",
   "title": "activity \u2014 source.properties vocabulary",
   "description": "Registered core type for one recorded physical exercise session. Provider-neutral source facts; normally zero elements. External identifiers, such as strava_activity_id, belong in keys. Official owner-entered race results belong in user.properties.",
   "type": "object",
