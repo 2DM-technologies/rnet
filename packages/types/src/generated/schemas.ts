@@ -204,7 +204,7 @@ export const mediaElementSchema = {
       "type": "object",
       "description": "A map keyed by writer and task: every key is {writer}:{task}. The element's memory: descriptions and analyses of its payload, derived once because the payload never changes. A re-run replaces only its own key, and never a durable entry. Consumers MUST treat entries as advisory.",
       "propertyNames": {
-        "pattern": "^[a-z][a-z0-9._-]*:[a-z][a-z0-9_]*$"
+        "pattern": "^[a-z][a-z0-9._-]*:[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
       },
       "additionalProperties": {
         "type": "object",
@@ -415,7 +415,7 @@ export const mediaObjectSchema = {
       "type": "object",
       "description": "A map keyed by writer and task: every key is {writer}:{task}. Memory scoped to this record — some entries are task output recomputed from source, others accumulated from agent observation and cannot be re-derived. A re-run replaces only its own key, and never a durable entry. Consumers MUST treat entries as advisory.",
       "propertyNames": {
-        "pattern": "^[a-z][a-z0-9._-]*:[a-z][a-z0-9_]*$"
+        "pattern": "^[a-z][a-z0-9._-]*:[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
       },
       "additionalProperties": {
         "type": "object",
@@ -758,7 +758,7 @@ export const vibeSchema = {
       "type": "object",
       "description": "A map keyed by writer and task: every key is {writer}:{task}. Memory scoped to this record — some entries are task output recomputed from source, others accumulated from agent observation and cannot be re-derived. A re-run replaces only its own key, and never a durable entry. Consumers MUST treat entries as advisory. The store's summarize task conventionally writes summary and tags.",
       "propertyNames": {
-        "pattern": "^[a-z][a-z0-9._-]*:[a-z][a-z0-9_]*$"
+        "pattern": "^[a-z][a-z0-9._-]*:[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
       },
       "additionalProperties": {
         "type": "object",

@@ -439,7 +439,7 @@
       "bytes": "https://blob.example/element",
       "alt": "Synthetic note body",
       "inferred": {
-        "rhizome:describe_media": {
+        "rhizome:describe-media": {
           "model": "openai/gpt-5.6-luna",
           "properties": {
             "caption": "a note"

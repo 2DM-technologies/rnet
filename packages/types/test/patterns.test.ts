@@ -99,9 +99,12 @@ describe("record identity patterns", () => {
     expect(() => rnetUriPattern()).toThrow();
   });
 
-  test("task names are bare lowercase identifiers", () => {
+  test("task names are bare lowercase kebab-case identifiers", () => {
     const taskPattern = new RegExp(TASK_PATTERN);
-    expect(taskPattern.test("categorize_transactions")).toBe(true);
+    expect(taskPattern.test("categorize-transactions")).toBe(true);
+    expect(taskPattern.test("categorize_transactions")).toBe(false);
+    expect(taskPattern.test("categorize--transactions")).toBe(false);
+    expect(taskPattern.test("categorize-")).toBe(false);
     expect(taskPattern.test("bad task")).toBe(false);
     expect(taskPattern.test("rhizome:categorize")).toBe(false);
     expect(mediaObjectSchema.properties.inferred.propertyNames.pattern.endsWith(`:${TASK}$`)).toBe(
