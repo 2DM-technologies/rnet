@@ -259,6 +259,7 @@ A dynamic, owned collection of MediaObjects, plus the state that makes it living
   "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
   "objects": ["rnet://object/0198f2a1-7c3d-7e4b-9f21-3a5c8d0e1b47", "..."],
   "created_at": "2026-08-15T22:00:00Z",
+  "updated_at": "2026-08-15T22:05:00Z",
 
   "inferred": {
     "rhizome:summarize": {
@@ -280,9 +281,7 @@ A dynamic, owned collection of MediaObjects, plus the state that makes it living
 
   "grants": [
     { "subject": "client:rbudget", "scope": ["read", "write:user", "push"] }
-  ],
-
-  "x-rhizome": {}
+  ]
 }
 ```
 
@@ -291,6 +290,7 @@ A dynamic, owned collection of MediaObjects, plus the state that makes it living
 | `rnet_schema` | Protocol version this document conforms to. Required. |
 | `owner` | An `rnet://id/{uuidv7}` URI. Identity issuance and authentication are implementation-defined (§8). |
 | `objects` | Ordered list of MediaObject URIs. A URI MAY appear more than once; each occurrence is a distinct placement. Stores MUST preserve this order, including repeated references, across paginated reads. |
+| `updated_at` | Required store-assigned timestamp of the latest committed Vibe change. Initially equals `created_at`; advances for title, grants, membership, pull configuration, and Vibe inference changes. Reads and changes only to referenced objects/elements do not advance it. |
 | `inferred` | The Vibe-level inferred block — same task-keyed shape and rules as an object's (§2.3). Vibes carry no `source` block: they are authored, not ingested. The store's `summarize` task conventionally writes `summary` (the compact context pushed to models instead of the full object list) and `tags`. Derived indexes — embeddings, search structures — are built *from* Vibes by the store, never carried *in* them. |
 | `pull` | How the Vibe acquires new objects: which sources feed it, on what policy (`append_new`, `replace`, `suggest_only`). |
 | `grants` | The access-control list (§3). |
