@@ -132,7 +132,8 @@
             "summary": "Synthetic fixture"
           }
         }
-      }
+      },
+      "updated_at": "2026-08-21T12:00:00Z"
     }
   },
   {
@@ -538,7 +539,8 @@
       "objects": [
         "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abc",
         "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abc"
-      ]
+      ],
+      "updated_at": "2026-08-21T12:00:00Z"
     }
   },
   {
@@ -551,6 +553,71 @@
         "read",
         "admin"
       ]
+    }
+  },
+  {
+    "name": "rejects a Vibe without its update timestamp",
+    "schema": "vibe",
+    "valid": false,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://vibe/018f1f4e-7b3a-7cc1-8b7a-123456789abe",
+      "title": "Spending",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "objects": [
+        "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abc"
+      ],
+      "grants": [
+        {
+          "subject": "client:rbudget",
+          "scope": [
+            "read",
+            "write:user"
+          ]
+        }
+      ],
+      "inferred": {
+        "rhizome:summarize": {
+          "model": "openai/gpt-example",
+          "inferred_at": "2026-08-21T12:00:00Z",
+          "properties": {
+            "summary": "Synthetic fixture"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "rejects an invalid Vibe update timestamp",
+    "schema": "vibe",
+    "valid": false,
+    "document": {
+      "rnet_schema": "0.1",
+      "uri": "rnet://vibe/018f1f4e-7b3a-7cc1-8b7a-123456789abe",
+      "title": "Spending",
+      "owner": "rnet://id/0198f2a0-4d11-7a83-b5c6-1e9f0a2b3c4d",
+      "objects": [
+        "rnet://object/018f1f4e-7b3a-7cc1-8b7a-123456789abc"
+      ],
+      "grants": [
+        {
+          "subject": "client:rbudget",
+          "scope": [
+            "read",
+            "write:user"
+          ]
+        }
+      ],
+      "inferred": {
+        "rhizome:summarize": {
+          "model": "openai/gpt-example",
+          "inferred_at": "2026-08-21T12:00:00Z",
+          "properties": {
+            "summary": "Synthetic fixture"
+          }
+        }
+      },
+      "updated_at": "not-a-timestamp"
     }
   }
 ]

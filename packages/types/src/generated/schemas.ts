@@ -683,7 +683,8 @@ export const vibeSchema = {
     "uri",
     "title",
     "owner",
-    "objects"
+    "objects",
+    "updated_at"
   ],
   "properties": {
     "rnet_schema": {
@@ -715,6 +716,11 @@ export const vibeSchema = {
     "created_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Store-assigned timestamp of the latest committed Vibe change, including title, grants, membership, pull configuration, or Vibe inference. Initially equals created_at; reads and changes only to a referenced object or element do not advance it."
     },
     "pull": {
       "type": "object",
